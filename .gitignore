@@ -1,0 +1,6 @@
+#VS
+x64/
+*.vcxproj*
+
+#SDL
+SDL2.dll
