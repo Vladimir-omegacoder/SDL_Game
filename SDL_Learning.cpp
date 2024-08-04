@@ -1,6 +1,7 @@
 ﻿#include <iostream>
 #include <string>
 #include "SDL.h"
+#include "SDL_image.h"
 
 
 
@@ -94,7 +95,13 @@ int main(int argc, char* args[])
 			}
 		}
 
-		SDL_BlitSurface(currentSurface, NULL, windowSurface, NULL);
+		SDL_Rect stretchRect;
+		stretchRect.x = 200;
+		stretchRect.y = 240;
+		stretchRect.w = 200;
+		stretchRect.h = 100;
+
+		SDL_BlitScaled(currentSurface, NULL, windowSurface, &stretchRect);
 		SDL_UpdateWindowSurface(window);
 
 	}
@@ -130,7 +137,16 @@ bool init()
 	}
 	else
 	{
-		windowSurface = SDL_GetWindowSurface(window);
+		int imgFlags = IMG_INIT_PNG;
+		if (!((IMG_Init(imgFlags) & imgFlags)))
+		{
+			std::cerr << "Couldn't initialize SDL_image. SDL_image Error: " << IMG_GetError() << '\n';
+			return false;
+		}
+		else
+		{
+			windowSurface = SDL_GetWindowSurface(window);
+		}
 	}
 
 	return true;
@@ -140,13 +156,24 @@ bool init()
 SDL_Surface* loadSurface(const std::string& path)
 {
 	
-	SDL_Surface* surface = SDL_LoadBMP(path.c_str());
-	if (surface == nullptr)
+	SDL_Surface* optimized_surface = nullptr;
+	SDL_Surface* loaded_surface = IMG_Load(path.c_str());
+
+	if (loaded_surface == nullptr)
 	{
-		std::cerr << "Unable to load the image \"" << path << "\". SDL_Error: " << SDL_GetError() << '\n';
+		std::cerr << "Unable to load the image \"" << path << "\". SDL_Error: " << IMG_GetError() << '\n';
+	}
+	else
+	{
+		optimized_surface = SDL_ConvertSurface(loaded_surface, windowSurface->format, 0);
+		if (optimized_surface == nullptr)
+		{
+			std::cerr << "Couldn't optimize the surface. SDL_Error: " << SDL_GetError() << '\n';
+		}
+		SDL_FreeSurface(loaded_surface);
 	}
 
-	return surface;
+	return optimized_surface;
 
 }
 
