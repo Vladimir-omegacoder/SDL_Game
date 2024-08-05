@@ -24,7 +24,8 @@ SDL_Window* window = nullptr;
 
 SDL_Renderer* renderer = nullptr;
 
-SDL_Texture* texture = nullptr;
+const size_t TEXTURES_AMOUNT = 3;
+SDL_Texture* textures[TEXTURES_AMOUNT] {};
 
 
 
@@ -58,6 +59,10 @@ int main(int argc, char* args[])
 		return -1;
 	}
 
+	SDL_Rect topLeftViewport{0, 0, WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2};
+	SDL_Rect topRightViewport{ WINDOW_WIDTH / 2, 0, WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2 };
+	SDL_Rect bottomViewport{ 0, WINDOW_HEIGHT / 2, WINDOW_WIDTH, WINDOW_HEIGHT / 2 };
+
 	while (quit == false)
 	{
 		while (SDL_PollEvent(&e))
@@ -68,25 +73,14 @@ int main(int argc, char* args[])
 			}
 		}
 
-		SDL_SetRenderDrawColor(renderer, 0, 0, 155, 255);
-		SDL_RenderClear(renderer);
+		SDL_RenderSetViewport(renderer, &topLeftViewport);
+		SDL_RenderCopy(renderer, textures[0], nullptr, nullptr);
 
-		SDL_Rect outline_rect{ WINDOW_WIDTH / 6, WINDOW_HEIGHT / 6, WINDOW_WIDTH * 2 / 3, WINDOW_HEIGHT * 2 / 3 };
-		SDL_SetRenderDrawColor(renderer, 155, 0, 255, 255);
-		SDL_RenderFillRect(renderer, &outline_rect);
+		SDL_RenderSetViewport(renderer, &topRightViewport);
+		SDL_RenderCopy(renderer, textures[1], nullptr, nullptr);
 
-		SDL_Rect rect{ WINDOW_WIDTH / 4, WINDOW_HEIGHT / 4, WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2 };
-		SDL_SetRenderDrawColor(renderer, 155, 155, 0, 255);
-		SDL_RenderDrawRect(renderer, &rect);
-
-		SDL_SetRenderDrawColor(renderer, 0, 255, 0, 255);
-		SDL_RenderDrawLine(renderer, WINDOW_WIDTH * 0.05, WINDOW_HEIGHT / 2, WINDOW_WIDTH * 0.95, WINDOW_HEIGHT / 2);
-
-		SDL_SetRenderDrawColor(renderer, 0, 255, 255, 255);
-		for (size_t i = 10; i < WINDOW_HEIGHT; i += 10)
-		{
-			SDL_RenderDrawPoint(renderer, WINDOW_WIDTH / 2, i);
-		}
+		SDL_RenderSetViewport(renderer, &bottomViewport);
+		SDL_RenderCopy(renderer, textures[2], nullptr, nullptr);
 
 		SDL_RenderPresent(renderer);
 
@@ -161,8 +155,11 @@ SDL_Surface* loadSurface(const std::string& path)
 void close()
 {
 
-	SDL_DestroyTexture(texture);
-	texture = nullptr;
+	for (size_t i = 0; i < TEXTURES_AMOUNT; i++)
+	{
+		SDL_DestroyTexture(textures[i]);
+		textures[i] = nullptr;
+	}
 
 	SDL_DestroyRenderer(renderer);
 	renderer = nullptr;
@@ -174,6 +171,16 @@ void close()
 
 bool loadAllMedia()
 {
+
+	for (size_t i = 0; i < TEXTURES_AMOUNT; i++)
+	{
+		textures[i] = loadTexture("clown" + std::to_string(i + 1) + ".png");
+		if (textures[i] == nullptr)
+		{
+			std::cerr << "Failed to load texture image." << '\n';
+			return false;
+		}
+	}
 
 	return true;
 
@@ -190,19 +197,6 @@ SDL_Texture* loadTexture(const std::string& path)
 	{
 		std::cerr << "Unable to create texture. SDL Error: " << SDL_GetError() << '\n';
 	}
-
-	/*SDL_Surface* loadedSurface = loadSurface(path);
-
-	if (loadedSurface != nullptr)
-	{
-		newTexture = SDL_CreateTextureFromSurface(renderer, loadedSurface);
-		SDL_FreeSurface(loadedSurface);
-
-		if (newTexture == nullptr)
-		{
-			std::cerr << "Unable to create texture. SDL Error: " << SDL_GetError() << '\n';
-		}
-	}*/
 
 	return newTexture;
 
