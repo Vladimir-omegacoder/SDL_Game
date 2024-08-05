@@ -21,9 +21,10 @@ constexpr int WINDOW_WIDTH = 640;
 constexpr int WINDOW_HEIGHT = 480;
 
 SDL_Window* window = nullptr;
-SDL_Surface* windowSurface = nullptr;
-SDL_Surface* currentSurface = nullptr;
-SDL_Surface* keyPressSurfaces[KEY_PRESS_SURFACE_TOTAL];
+
+SDL_Renderer* renderer = nullptr;
+
+SDL_Texture* texture = nullptr;
 
 
 
@@ -34,6 +35,8 @@ SDL_Surface* loadSurface(const std::string& path);
 void close();
 
 bool loadAllMedia();
+
+SDL_Texture* loadTexture(const std::string& path);
 
 
 
@@ -55,7 +58,7 @@ int main(int argc, char* args[])
 		return -1;
 	}
 
-	currentSurface = keyPressSurfaces[KEY_PRESS_SURFACE_DEFAULT];
+	SDL_SetRenderDrawColor(renderer, 0, 0, 255, 255);
 
 	while (quit == false)
 	{
@@ -68,41 +71,16 @@ int main(int argc, char* args[])
 			else if (e.type == SDL_KEYDOWN)
 			{
 
-				switch (e.key.keysym.sym)
-				{
-
-				case SDLK_UP:
-					currentSurface = keyPressSurfaces[KEY_PRESS_SURFACE_UP];
-					break;
-
-				case SDLK_DOWN:
-					currentSurface = keyPressSurfaces[KEY_PRESS_SURFACE_DOWN];
-					break;
-
-				case SDLK_LEFT:
-					currentSurface = keyPressSurfaces[KEY_PRESS_SURFACE_LEFT];
-					break;
-
-				case SDLK_RIGHT:
-					currentSurface = keyPressSurfaces[KEY_PRESS_SURFACE_RIGHT];
-					break;
-
-				default:
-					currentSurface = keyPressSurfaces[KEY_PRESS_SURFACE_DEFAULT];
-					break;
-				}
+				
 
 			}
 		}
 
-		SDL_Rect stretchRect;
-		stretchRect.x = 200;
-		stretchRect.y = 240;
-		stretchRect.w = 200;
-		stretchRect.h = 100;
+		SDL_RenderClear(renderer);
 
-		SDL_BlitScaled(currentSurface, NULL, windowSurface, &stretchRect);
-		SDL_UpdateWindowSurface(window);
+		SDL_RenderCopy(renderer, texture, nullptr, nullptr);
+
+		SDL_RenderPresent(renderer);
 
 	}
 	
@@ -119,7 +97,7 @@ bool init()
 
 	if (SDL_Init(SDL_INIT_VIDEO) < 0)
 	{
-		std::cerr << "Couldn't initialize SDL. SDL_Error: " << SDL_GetError() << '\n';
+		std::cerr << "Couldn't initialize SDL. SDL Error: " << SDL_GetError() << '\n';
 		return false;
 	}
 	else
@@ -132,21 +110,26 @@ bool init()
 
 	if (window == nullptr)
 	{
-		std::cerr << "Couldn't create SDL window. SDL_Error: " << SDL_GetError() << '\n';
+		std::cerr << "Couldn't create SDL window. SDL Error: " << SDL_GetError() << '\n';
+		return false;
+	}
+
+	int imgFlags = IMG_INIT_PNG;
+	if (!((IMG_Init(imgFlags) & imgFlags)))
+	{
+		std::cerr << "Couldn't initialize SDL_image. SDL image Error: " << IMG_GetError() << '\n';
+		return false;
+	}
+
+	renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+	if (renderer == nullptr)
+	{
+		std::cerr << "Couldn't create SDL_renderer. SDL Error: " << SDL_GetError() << '\n';
 		return false;
 	}
 	else
 	{
-		int imgFlags = IMG_INIT_PNG;
-		if (!((IMG_Init(imgFlags) & imgFlags)))
-		{
-			std::cerr << "Couldn't initialize SDL_image. SDL_image Error: " << IMG_GetError() << '\n';
-			return false;
-		}
-		else
-		{
-			windowSurface = SDL_GetWindowSurface(window);
-		}
+		SDL_SetRenderDrawColor(renderer, 0xFF, 0xFF, 0xFF, 0xFF);
 	}
 
 	return true;
@@ -156,78 +139,71 @@ bool init()
 SDL_Surface* loadSurface(const std::string& path)
 {
 	
-	SDL_Surface* optimized_surface = nullptr;
 	SDL_Surface* loaded_surface = IMG_Load(path.c_str());
 
 	if (loaded_surface == nullptr)
 	{
-		std::cerr << "Unable to load the image \"" << path << "\". SDL_Error: " << IMG_GetError() << '\n';
-	}
-	else
-	{
-		optimized_surface = SDL_ConvertSurface(loaded_surface, windowSurface->format, 0);
-		if (optimized_surface == nullptr)
-		{
-			std::cerr << "Couldn't optimize the surface. SDL_Error: " << SDL_GetError() << '\n';
-		}
-		SDL_FreeSurface(loaded_surface);
+		std::cerr << "Unable to load the image \"" << path << "\". SDL Error: " << IMG_GetError() << '\n';
 	}
 
-	return optimized_surface;
+	return loaded_surface;
 
 }
 
 void close()
 {
 
-	SDL_FreeSurface(currentSurface);
-	currentSurface = nullptr;
+	SDL_DestroyTexture(texture);
+	texture = nullptr;
 
-	SDL_FreeSurface(windowSurface);
-	windowSurface = nullptr;
+	SDL_DestroyRenderer(renderer);
+	renderer = nullptr;
 
+	IMG_Quit();
 	SDL_Quit();
 
 }
 
 bool loadAllMedia()
 {
-	
-	keyPressSurfaces[KEY_PRESS_SURFACE_DEFAULT] = loadSurface("defalut_surface.bmp");
-	if (keyPressSurfaces[KEY_PRESS_SURFACE_DEFAULT] == nullptr)
-	{
-		std::cerr << "Unable to load default surface. SDL_Error: " << SDL_GetError() << '\n';
-		return false;
-	}
 
-	keyPressSurfaces[KEY_PRESS_SURFACE_UP] = loadSurface("up_surface.bmp");
-	if (keyPressSurfaces[KEY_PRESS_SURFACE_UP] == nullptr)
-	{
-		std::cerr << "Unable to load up surface. SDL_Error: " << SDL_GetError() << '\n';
-		return false;
-	}
+	texture = loadTexture("texture.png");
 
-	keyPressSurfaces[KEY_PRESS_SURFACE_DOWN] = loadSurface("down_surface.bmp");
-	if (keyPressSurfaces[KEY_PRESS_SURFACE_DOWN] == nullptr)
+	if (texture == nullptr)
 	{
-		std::cerr << "Unable to load down surface. SDL_Error: " << SDL_GetError() << '\n';
-		return false;
-	}
-
-	keyPressSurfaces[KEY_PRESS_SURFACE_LEFT] = loadSurface("left_surface.bmp");
-	if (keyPressSurfaces[KEY_PRESS_SURFACE_LEFT] == nullptr)
-	{
-		std::cerr << "Unable to load left surface. SDL_Error: " << SDL_GetError() << '\n';
-		return false;
-	}
-
-	keyPressSurfaces[KEY_PRESS_SURFACE_RIGHT] = loadSurface("right_surface.bmp");
-	if (keyPressSurfaces[KEY_PRESS_SURFACE_RIGHT] == nullptr)
-	{
-		std::cerr << "Unable to load right surface. SDL_Error: " << SDL_GetError() << '\n';
+		std::cerr << "Failed to load texture image." << '\n';
 		return false;
 	}
 
 	return true;
+
+}
+
+SDL_Texture* loadTexture(const std::string& path)
+{
+	
+	SDL_Texture* newTexture = nullptr;
+
+	newTexture = IMG_LoadTexture(renderer, path.c_str());
+
+	if (newTexture == nullptr)
+	{
+		std::cerr << "Unable to create texture. SDL Error: " << SDL_GetError() << '\n';
+	}
+
+	/*SDL_Surface* loadedSurface = loadSurface(path);
+
+	if (loadedSurface != nullptr)
+	{
+		newTexture = SDL_CreateTextureFromSurface(renderer, loadedSurface);
+		SDL_FreeSurface(loadedSurface);
+
+		if (newTexture == nullptr)
+		{
+			std::cerr << "Unable to create texture. SDL Error: " << SDL_GetError() << '\n';
+		}
+	}*/
+
+	return newTexture;
 
 }
