@@ -58,8 +58,6 @@ int main(int argc, char* args[])
 		return -1;
 	}
 
-	SDL_SetRenderDrawColor(renderer, 0, 0, 255, 255);
-
 	while (quit == false)
 	{
 		while (SDL_PollEvent(&e))
@@ -68,17 +66,27 @@ int main(int argc, char* args[])
 			{
 				quit = true;
 			}
-			else if (e.type == SDL_KEYDOWN)
-			{
-
-				
-
-			}
 		}
 
+		SDL_SetRenderDrawColor(renderer, 0, 0, 155, 255);
 		SDL_RenderClear(renderer);
 
-		SDL_RenderCopy(renderer, texture, nullptr, nullptr);
+		SDL_Rect outline_rect{ WINDOW_WIDTH / 6, WINDOW_HEIGHT / 6, WINDOW_WIDTH * 2 / 3, WINDOW_HEIGHT * 2 / 3 };
+		SDL_SetRenderDrawColor(renderer, 155, 0, 255, 255);
+		SDL_RenderFillRect(renderer, &outline_rect);
+
+		SDL_Rect rect{ WINDOW_WIDTH / 4, WINDOW_HEIGHT / 4, WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2 };
+		SDL_SetRenderDrawColor(renderer, 155, 155, 0, 255);
+		SDL_RenderDrawRect(renderer, &rect);
+
+		SDL_SetRenderDrawColor(renderer, 0, 255, 0, 255);
+		SDL_RenderDrawLine(renderer, WINDOW_WIDTH * 0.05, WINDOW_HEIGHT / 2, WINDOW_WIDTH * 0.95, WINDOW_HEIGHT / 2);
+
+		SDL_SetRenderDrawColor(renderer, 0, 255, 255, 255);
+		for (size_t i = 10; i < WINDOW_HEIGHT; i += 10)
+		{
+			SDL_RenderDrawPoint(renderer, WINDOW_WIDTH / 2, i);
+		}
 
 		SDL_RenderPresent(renderer);
 
@@ -166,14 +174,6 @@ void close()
 
 bool loadAllMedia()
 {
-
-	texture = loadTexture("texture.png");
-
-	if (texture == nullptr)
-	{
-		std::cerr << "Failed to load texture image." << '\n';
-		return false;
-	}
 
 	return true;
 
