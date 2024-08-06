@@ -18,7 +18,7 @@ enum KeyPressSurfaces
 
 enum TexturesKey
 {
-	CIRCLES_TEXTURE,
+	MODULATED_TEXTURE,
 	TEXTURE_TOTAL_COUNT
 };
 
@@ -30,8 +30,6 @@ SDL_Window* window = nullptr;
 SDL_Renderer* renderer = nullptr;
 
 Texture textures[TEXTURE_TOTAL_COUNT] {};
-
-SDL_Rect sprites[4];
 
 
 
@@ -65,6 +63,8 @@ int main(int argc, char* args[])
 		return -1;
 	}
 
+	Uint8 r = 255, g = 255, b = 255;
+
 	while (quit == false)
 	{
 		while (SDL_PollEvent(&e))
@@ -73,15 +73,52 @@ int main(int argc, char* args[])
 			{
 				quit = true;
 			}
+			else if (e.type == SDL_KEYDOWN)
+			{
+
+				switch (e.key.keysym.sym)
+				{
+
+					//Increase red
+				case SDLK_q:
+					r += 32;
+					break;
+
+					//Increase green
+				case SDLK_w:
+					g += 32;
+					break;
+
+					//Increase blue
+				case SDLK_e:
+					b += 32;
+					break;
+
+					//Decrease red
+				case SDLK_a:
+					r -= 32;
+					break;
+
+					//Decrease green
+				case SDLK_s:
+					g -= 32;
+					break;
+
+					//Decrease blue
+				case SDLK_d:
+					b -= 32;
+					break;
+
+				}
+
+			}
 		}
 
 		SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
 		SDL_RenderClear(renderer);
 
-		textures[CIRCLES_TEXTURE].render(renderer, 0, 0, &sprites[0]);
-		textures[CIRCLES_TEXTURE].render(renderer, WINDOW_WIDTH - sprites[1].w, 0, &sprites[1]);
-		textures[CIRCLES_TEXTURE].render(renderer, 0, WINDOW_HEIGHT - sprites[2].h, &sprites[2]);
-		textures[CIRCLES_TEXTURE].render(renderer, WINDOW_WIDTH - sprites[3].w, WINDOW_HEIGHT - sprites[3].h, &sprites[3]);
+		textures[MODULATED_TEXTURE].setColor(r, g, b);
+		textures[MODULATED_TEXTURE].render(renderer, 0, 0);
 
 		SDL_RenderPresent(renderer);
 
@@ -175,12 +212,7 @@ void close()
 bool loadAllMedia()
 {
 
-	textures[CIRCLES_TEXTURE].loadFromFile(renderer, "resources\\circles.png");
-
-	sprites[0] = SDL_Rect{ 0, 0, 100, 100 };
-	sprites[1] = SDL_Rect{ 100, 0, 100, 100 };
-	sprites[2] = SDL_Rect{ 0, 100, 100, 100 };
-	sprites[3] = SDL_Rect{ 100, 100, 100, 100 };
+	textures[MODULATED_TEXTURE].loadFromFile(renderer, "resources\\modulation.png");
 
 	return true;
 

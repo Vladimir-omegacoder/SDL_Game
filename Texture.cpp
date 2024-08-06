@@ -75,3 +75,8 @@ size_t Texture::getHeight() const
 {
 	return _height;
 }
+
+void Texture::setColor(Uint8 red, Uint8 green, Uint8 blue)
+{
+	SDL_SetTextureColorMod(_texture, red, green, blue);
+}

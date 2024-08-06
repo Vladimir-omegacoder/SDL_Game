@@ -34,6 +34,8 @@ public:
 
 	size_t getHeight() const;
 
+	void setColor(Uint8 red, Uint8 green, Uint8 blue);
+
 };
 
 #endif
