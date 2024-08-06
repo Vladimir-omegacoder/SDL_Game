@@ -26,7 +26,7 @@ public:
 
 	void free();
 
-	void render(SDL_Renderer* renderer, int x, int y) const;
+	void render(SDL_Renderer* renderer, int x, int y, SDL_Rect* clip = nullptr) const;
 
 	const SDL_Texture* getTexture() const;
 

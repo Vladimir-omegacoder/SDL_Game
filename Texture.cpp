@@ -50,10 +50,15 @@ void Texture::free()
 	_height = 0;
 }
 
-void Texture::render(SDL_Renderer* renderer, int x, int y) const
+void Texture::render(SDL_Renderer* renderer, int x, int y, SDL_Rect* clip) const
 {
 	SDL_Rect renderQuad = { x, y, _width, _height };
-	SDL_RenderCopy(renderer, _texture, nullptr, &renderQuad);
+	if (clip != nullptr)
+	{
+		renderQuad.w = clip->w;
+		renderQuad.h = clip->h;
+	}
+	SDL_RenderCopy(renderer, _texture, clip, &renderQuad);
 }
 
 const SDL_Texture* Texture::getTexture() const

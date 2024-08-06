@@ -18,8 +18,7 @@ enum KeyPressSurfaces
 
 enum TexturesKey
 {
-	BACKGROUND_TEXTURE,
-	FOO_TEXTURE,
+	CIRCLES_TEXTURE,
 	TEXTURE_TOTAL_COUNT
 };
 
@@ -31,6 +30,8 @@ SDL_Window* window = nullptr;
 SDL_Renderer* renderer = nullptr;
 
 Texture textures[TEXTURE_TOTAL_COUNT] {};
+
+SDL_Rect sprites[4];
 
 
 
@@ -77,8 +78,10 @@ int main(int argc, char* args[])
 		SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
 		SDL_RenderClear(renderer);
 
-		textures[BACKGROUND_TEXTURE].render(renderer, 0, 0);
-		textures[FOO_TEXTURE].render(renderer, 240, 190);
+		textures[CIRCLES_TEXTURE].render(renderer, 0, 0, &sprites[0]);
+		textures[CIRCLES_TEXTURE].render(renderer, WINDOW_WIDTH - sprites[1].w, 0, &sprites[1]);
+		textures[CIRCLES_TEXTURE].render(renderer, 0, WINDOW_HEIGHT - sprites[2].h, &sprites[2]);
+		textures[CIRCLES_TEXTURE].render(renderer, WINDOW_WIDTH - sprites[3].w, WINDOW_HEIGHT - sprites[3].h, &sprites[3]);
 
 		SDL_RenderPresent(renderer);
 
@@ -172,9 +175,12 @@ void close()
 bool loadAllMedia()
 {
 
-	textures[BACKGROUND_TEXTURE].loadFromFile(renderer, "resources\\meadow.png");
+	textures[CIRCLES_TEXTURE].loadFromFile(renderer, "resources\\circles.png");
 
-	textures[FOO_TEXTURE].loadFromFile(renderer, "resources\\foo.png");
+	sprites[0] = SDL_Rect{ 0, 0, 100, 100 };
+	sprites[1] = SDL_Rect{ 100, 0, 100, 100 };
+	sprites[2] = SDL_Rect{ 0, 100, 100, 100 };
+	sprites[3] = SDL_Rect{ 100, 100, 100, 100 };
 
 	return true;
 
