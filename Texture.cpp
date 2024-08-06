@@ -80,3 +80,13 @@ void Texture::setColor(Uint8 red, Uint8 green, Uint8 blue)
 {
 	SDL_SetTextureColorMod(_texture, red, green, blue);
 }
+
+void Texture::setAlpha(Uint8 alpha)
+{
+	SDL_SetTextureAlphaMod(_texture, alpha);
+}
+
+void Texture::setBlendMode(SDL_BlendMode blending)
+{
+	SDL_SetTextureBlendMode(_texture, blending);
+}

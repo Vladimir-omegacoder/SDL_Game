@@ -18,7 +18,8 @@ enum KeyPressSurfaces
 
 enum TexturesKey
 {
-	MODULATED_TEXTURE,
+	BACKGROUND_TEXTURE,
+	BLENDING_TEXTURE,
 	TEXTURE_TOTAL_COUNT
 };
 
@@ -63,7 +64,7 @@ int main(int argc, char* args[])
 		return -1;
 	}
 
-	Uint8 r = 255, g = 255, b = 255;
+	Uint8 a = 0;
 
 	while (quit == false)
 	{
@@ -78,47 +79,42 @@ int main(int argc, char* args[])
 
 				switch (e.key.keysym.sym)
 				{
-
-					//Increase red
-				case SDLK_q:
-					r += 32;
-					break;
-
-					//Increase green
+					//Increase alpha
 				case SDLK_w:
-					g += 32;
+					if (a + 16 > 255)
+					{
+						a = 255;
+					}
+					else
+					{
+						a += 16;
+					}
 					break;
 
-					//Increase blue
-				case SDLK_e:
-					b += 32;
-					break;
-
-					//Decrease red
-				case SDLK_a:
-					r -= 32;
-					break;
-
-					//Decrease green
+					//Decrease alpha
 				case SDLK_s:
-					g -= 32;
-					break;
-
-					//Decrease blue
-				case SDLK_d:
-					b -= 32;
+					if (a - 16 < 0)
+					{
+						a = 0;
+					}
+					else
+					{
+						a -= 16;
+					}
 					break;
 
 				}
 
 			}
+
 		}
 
 		SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
 		SDL_RenderClear(renderer);
 
-		textures[MODULATED_TEXTURE].setColor(r, g, b);
-		textures[MODULATED_TEXTURE].render(renderer, 0, 0);
+		textures[BACKGROUND_TEXTURE].render(renderer, 0, 0);
+		textures[BLENDING_TEXTURE].setAlpha(a);
+		textures[BLENDING_TEXTURE].render(renderer, 0, 0);
 
 		SDL_RenderPresent(renderer);
 
@@ -212,7 +208,10 @@ void close()
 bool loadAllMedia()
 {
 
-	textures[MODULATED_TEXTURE].loadFromFile(renderer, "resources\\modulation.png");
+	textures[BACKGROUND_TEXTURE].loadFromFile(renderer, "resources\\cplusplus.png");
+
+	textures[BLENDING_TEXTURE].loadFromFile(renderer, "resources\\crying.png");
+	textures[BLENDING_TEXTURE].setBlendMode(SDL_BLENDMODE_BLEND);
 
 	return true;
 
