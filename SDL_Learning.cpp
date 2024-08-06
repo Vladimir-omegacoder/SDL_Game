@@ -2,6 +2,7 @@
 #include <string>
 #include "SDL.h"
 #include "SDL_image.h"
+#include "Texture.h"
 
 
 
@@ -15,7 +16,12 @@ enum KeyPressSurfaces
 	KEY_PRESS_SURFACE_TOTAL
 };
 
-
+enum TexturesKey
+{
+	BACKGROUND_TEXTURE,
+	FOO_TEXTURE,
+	TEXTURE_TOTAL_COUNT
+};
 
 constexpr int WINDOW_WIDTH = 640;
 constexpr int WINDOW_HEIGHT = 480;
@@ -24,8 +30,7 @@ SDL_Window* window = nullptr;
 
 SDL_Renderer* renderer = nullptr;
 
-const size_t TEXTURES_AMOUNT = 3;
-SDL_Texture* textures[TEXTURES_AMOUNT] {};
+Texture textures[TEXTURE_TOTAL_COUNT] {};
 
 
 
@@ -59,10 +64,6 @@ int main(int argc, char* args[])
 		return -1;
 	}
 
-	SDL_Rect topLeftViewport{0, 0, WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2};
-	SDL_Rect topRightViewport{ WINDOW_WIDTH / 2, 0, WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2 };
-	SDL_Rect bottomViewport{ 0, WINDOW_HEIGHT / 2, WINDOW_WIDTH, WINDOW_HEIGHT / 2 };
-
 	while (quit == false)
 	{
 		while (SDL_PollEvent(&e))
@@ -73,14 +74,11 @@ int main(int argc, char* args[])
 			}
 		}
 
-		SDL_RenderSetViewport(renderer, &topLeftViewport);
-		SDL_RenderCopy(renderer, textures[0], nullptr, nullptr);
+		SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+		SDL_RenderClear(renderer);
 
-		SDL_RenderSetViewport(renderer, &topRightViewport);
-		SDL_RenderCopy(renderer, textures[1], nullptr, nullptr);
-
-		SDL_RenderSetViewport(renderer, &bottomViewport);
-		SDL_RenderCopy(renderer, textures[2], nullptr, nullptr);
+		textures[BACKGROUND_TEXTURE].render(renderer, 0, 0);
+		textures[FOO_TEXTURE].render(renderer, 240, 190);
 
 		SDL_RenderPresent(renderer);
 
@@ -155,14 +153,16 @@ SDL_Surface* loadSurface(const std::string& path)
 void close()
 {
 
-	for (size_t i = 0; i < TEXTURES_AMOUNT; i++)
+	for (size_t i = 0; i < TEXTURE_TOTAL_COUNT; i++)
 	{
-		SDL_DestroyTexture(textures[i]);
-		textures[i] = nullptr;
+		textures[i].free();
 	}
 
 	SDL_DestroyRenderer(renderer);
 	renderer = nullptr;
+
+	SDL_DestroyWindow(window);
+	window = nullptr;
 
 	IMG_Quit();
 	SDL_Quit();
@@ -172,15 +172,9 @@ void close()
 bool loadAllMedia()
 {
 
-	for (size_t i = 0; i < TEXTURES_AMOUNT; i++)
-	{
-		textures[i] = loadTexture("clown" + std::to_string(i + 1) + ".png");
-		if (textures[i] == nullptr)
-		{
-			std::cerr << "Failed to load texture image." << '\n';
-			return false;
-		}
-	}
+	textures[BACKGROUND_TEXTURE].loadFromFile(renderer, "resources\\meadow.png");
+
+	textures[FOO_TEXTURE].loadFromFile(renderer, "resources\\foo.png");
 
 	return true;
 
