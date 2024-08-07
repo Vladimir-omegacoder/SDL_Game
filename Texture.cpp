@@ -40,6 +40,38 @@ void Texture::loadFromFile(SDL_Renderer* renderer, const std::string& path)
 
 }
 
+void Texture::loadFromRenderedText(SDL_Renderer* renderer, const std::string& textureText, TTF_Font* font, SDL_Color color)
+{
+
+	free();
+
+	SDL_Texture* finalTexture = nullptr;
+
+	SDL_Surface* loadedSurface = TTF_RenderText_Solid(font, textureText.c_str(), color);
+	if (loadedSurface == nullptr)
+	{
+		throw;
+	}
+	else
+	{
+		finalTexture = SDL_CreateTextureFromSurface(renderer, loadedSurface);
+		_width = loadedSurface->w;
+		_height = loadedSurface->h;
+
+		SDL_FreeSurface(loadedSurface);
+
+		if (finalTexture == nullptr)
+		{
+			_width = 0;
+			_height = 0;
+			throw;
+		}
+	}
+
+	_texture = finalTexture;
+
+}
+
 void Texture::free()
 {
 	if (_texture != nullptr)

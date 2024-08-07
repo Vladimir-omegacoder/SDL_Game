@@ -2,6 +2,7 @@
 #include <string>
 #include "SDL.h"
 #include "SDL_image.h"
+#include "SDL_ttf.h"
 #include "Texture.h"
 
 
@@ -18,8 +19,7 @@ enum KeyPressSurfaces
 
 enum TexturesKey
 {
-	CLOCK_TEXTURE,
-	CLOCK_HAND_TEXTURE,
+	TEXT_TEXTURE,
 	TEXTURE_TOTAL_COUNT
 };
 
@@ -31,6 +31,8 @@ SDL_Window* window = nullptr;
 SDL_Renderer* renderer = nullptr;
 
 Texture textures[TEXTURE_TOTAL_COUNT] {};
+
+TTF_Font* font = nullptr;
 
 const size_t FRAMES_COUNT = 5;
 SDL_Rect spriteClips[FRAMES_COUNT];
@@ -67,9 +69,6 @@ int main(int argc, char* args[])
 		return -1;
 	}
 
-	float angle = 0;
-	SDL_RendererFlip flip = SDL_FLIP_NONE;
-
 	while (quit == false)
 	{
 		while (SDL_PollEvent(&e))
@@ -78,47 +77,16 @@ int main(int argc, char* args[])
 			{
 				quit = true;
 			}
-			if (e.type == SDL_KEYDOWN)
-			{
-				if (e.key.keysym.sym == SDLK_w || e.key.keysym.sym == SDLK_s)
-				{
-					if (flip == SDL_FLIP_VERTICAL)
-					{
-						flip = SDL_FLIP_NONE;
-					}
-					else
-					{
-						flip = SDL_FLIP_VERTICAL;
-					}
-				}
-
-				if (e.key.keysym.sym == SDLK_d || e.key.keysym.sym == SDLK_a)
-				{
-					if (flip == SDL_FLIP_HORIZONTAL)
-					{
-						flip = SDL_FLIP_NONE;
-					}
-					else
-					{
-						flip = SDL_FLIP_HORIZONTAL;
-					}
-				}
-			}
 		}
 
 		SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
 		SDL_RenderClear(renderer);
 
-		textures[CLOCK_TEXTURE].render(renderer, 0, 0);
-
-		textures[CLOCK_HAND_TEXTURE].render(renderer,
-			((textures[CLOCK_TEXTURE].getWidth()) - textures[CLOCK_HAND_TEXTURE].getWidth()) / 2 + 10,
-			((textures[CLOCK_TEXTURE].getHeight()) - textures[CLOCK_HAND_TEXTURE].getHeight()) / 2 + 5,
-			nullptr, angle, nullptr, flip);
+		textures[TEXT_TEXTURE].render(renderer,
+			(WINDOW_WIDTH - textures[TEXT_TEXTURE].getWidth()) / 2,
+			(WINDOW_HEIGHT - textures[TEXT_TEXTURE].getHeight()) / 2);
 
 		SDL_RenderPresent(renderer);
-
-		angle++;
 
 	}
 	
@@ -159,6 +127,12 @@ bool init()
 		return false;
 	}
 
+	if (TTF_Init() == -1)
+	{
+		std::cerr << "Couldn't initialize SDL_ttf. SDL ttf Error: " << TTF_GetError() << '\n';
+		return false;
+	}
+
 	renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
 	if (renderer == nullptr)
 	{
@@ -196,12 +170,16 @@ void close()
 		textures[i].free();
 	}
 
+	TTF_CloseFont(font);
+	font = nullptr;
+
 	SDL_DestroyRenderer(renderer);
 	renderer = nullptr;
 
 	SDL_DestroyWindow(window);
 	window = nullptr;
 
+	TTF_Quit();
 	IMG_Quit();
 	SDL_Quit();
 
@@ -210,8 +188,16 @@ void close()
 bool loadAllMedia()
 {
 
-	textures[CLOCK_TEXTURE].loadFromFile(renderer, "resources\\clock.png");
-	textures[CLOCK_HAND_TEXTURE].loadFromFile(renderer, "resources\\clock_hand.png");
+	font = TTF_OpenFont("resources\\calibri.ttf", 28);
+
+	if (font == nullptr)
+	{
+		printf("Failed to load lazy font! SDL_ttf Error: %s\n", TTF_GetError());
+		throw;
+	}
+
+	SDL_Color textColor{ 0, 0, 0 };
+	textures[TEXT_TEXTURE].loadFromRenderedText(renderer, "Some fancy looking text here.", font, textColor);
 
 	return true;
 

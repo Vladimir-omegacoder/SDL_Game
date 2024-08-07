@@ -4,6 +4,7 @@
 
 #include "SDL.h"
 #include "SDL_image.h"
+#include "SDL_ttf.h"
 #include <string>
 
 
@@ -23,6 +24,8 @@ public:
 	~Texture();
 
 	void loadFromFile(SDL_Renderer* renderer, const std::string& path);
+
+	void loadFromRenderedText(SDL_Renderer* renderer, const std::string& textureText, TTF_Font* font, SDL_Color color);
 
 	void free();
 
