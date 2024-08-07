@@ -18,7 +18,8 @@ enum KeyPressSurfaces
 
 enum TexturesKey
 {
-	LIGHTER_ANIMATION,
+	CLOCK_TEXTURE,
+	CLOCK_HAND_TEXTURE,
 	TEXTURE_TOTAL_COUNT
 };
 
@@ -66,8 +67,8 @@ int main(int argc, char* args[])
 		return -1;
 	}
 
-	size_t frame = 0;
-	size_t framesElapsed = 0;
+	float angle = 0;
+	SDL_RendererFlip flip = SDL_FLIP_NONE;
 
 	while (quit == false)
 	{
@@ -77,27 +78,47 @@ int main(int argc, char* args[])
 			{
 				quit = true;
 			}
+			if (e.type == SDL_KEYDOWN)
+			{
+				if (e.key.keysym.sym == SDLK_w || e.key.keysym.sym == SDLK_s)
+				{
+					if (flip == SDL_FLIP_VERTICAL)
+					{
+						flip = SDL_FLIP_NONE;
+					}
+					else
+					{
+						flip = SDL_FLIP_VERTICAL;
+					}
+				}
+
+				if (e.key.keysym.sym == SDLK_d || e.key.keysym.sym == SDLK_a)
+				{
+					if (flip == SDL_FLIP_HORIZONTAL)
+					{
+						flip = SDL_FLIP_NONE;
+					}
+					else
+					{
+						flip = SDL_FLIP_HORIZONTAL;
+					}
+				}
+			}
 		}
 
 		SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
 		SDL_RenderClear(renderer);
 
-		SDL_Rect currentFrameClip = spriteClips[frame];
-		textures[LIGHTER_ANIMATION].render(renderer,
-			(WINDOW_WIDTH - currentFrameClip.w) / 2,
-			(WINDOW_HEIGHT - currentFrameClip.h) / 2,
-			&currentFrameClip);
+		textures[CLOCK_TEXTURE].render(renderer, 0, 0);
+
+		textures[CLOCK_HAND_TEXTURE].render(renderer,
+			((textures[CLOCK_TEXTURE].getWidth()) - textures[CLOCK_HAND_TEXTURE].getWidth()) / 2 + 10,
+			((textures[CLOCK_TEXTURE].getHeight()) - textures[CLOCK_HAND_TEXTURE].getHeight()) / 2 + 5,
+			nullptr, angle, nullptr, flip);
 
 		SDL_RenderPresent(renderer);
 
-		framesElapsed++;
-		frame = framesElapsed / (FRAMES_COUNT * 3);
-
-		if (frame >= FRAMES_COUNT)
-		{
-			framesElapsed = 0;
-			frame = 0;
-		}
+		angle++;
 
 	}
 	
@@ -189,32 +210,8 @@ void close()
 bool loadAllMedia()
 {
 
-	textures[LIGHTER_ANIMATION].loadFromFile(renderer, "resources\\lighter_animation.png");
-
-	spriteClips[0].x = 0;
-	spriteClips[0].y = 0;
-	spriteClips[0].w = 200;
-	spriteClips[0].h = 200;
-
-	spriteClips[1].x = 200;
-	spriteClips[1].y = 0;
-	spriteClips[1].w = 200;
-	spriteClips[1].h = 200;
-
-	spriteClips[2].x = 400;
-	spriteClips[2].y = 0;
-	spriteClips[2].w = 200;
-	spriteClips[2].h = 200;
-
-	spriteClips[3].x = 600;
-	spriteClips[3].y = 0;
-	spriteClips[3].w = 200;
-	spriteClips[3].h = 200;
-
-	spriteClips[4].x = 800;
-	spriteClips[4].y = 0;
-	spriteClips[4].w = 200;
-	spriteClips[4].h = 200;
+	textures[CLOCK_TEXTURE].loadFromFile(renderer, "resources\\clock.png");
+	textures[CLOCK_HAND_TEXTURE].loadFromFile(renderer, "resources\\clock_hand.png");
 
 	return true;
 
