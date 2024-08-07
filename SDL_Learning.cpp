@@ -18,8 +18,7 @@ enum KeyPressSurfaces
 
 enum TexturesKey
 {
-	BACKGROUND_TEXTURE,
-	BLENDING_TEXTURE,
+	LIGHTER_ANIMATION,
 	TEXTURE_TOTAL_COUNT
 };
 
@@ -31,6 +30,9 @@ SDL_Window* window = nullptr;
 SDL_Renderer* renderer = nullptr;
 
 Texture textures[TEXTURE_TOTAL_COUNT] {};
+
+const size_t FRAMES_COUNT = 5;
+SDL_Rect spriteClips[FRAMES_COUNT];
 
 
 
@@ -64,7 +66,8 @@ int main(int argc, char* args[])
 		return -1;
 	}
 
-	Uint8 a = 0;
+	size_t frame = 0;
+	size_t framesElapsed = 0;
 
 	while (quit == false)
 	{
@@ -74,49 +77,27 @@ int main(int argc, char* args[])
 			{
 				quit = true;
 			}
-			else if (e.type == SDL_KEYDOWN)
-			{
-
-				switch (e.key.keysym.sym)
-				{
-					//Increase alpha
-				case SDLK_w:
-					if (a + 16 > 255)
-					{
-						a = 255;
-					}
-					else
-					{
-						a += 16;
-					}
-					break;
-
-					//Decrease alpha
-				case SDLK_s:
-					if (a - 16 < 0)
-					{
-						a = 0;
-					}
-					else
-					{
-						a -= 16;
-					}
-					break;
-
-				}
-
-			}
-
 		}
 
 		SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
 		SDL_RenderClear(renderer);
 
-		textures[BACKGROUND_TEXTURE].render(renderer, 0, 0);
-		textures[BLENDING_TEXTURE].setAlpha(a);
-		textures[BLENDING_TEXTURE].render(renderer, 0, 0);
+		SDL_Rect currentFrameClip = spriteClips[frame];
+		textures[LIGHTER_ANIMATION].render(renderer,
+			(WINDOW_WIDTH - currentFrameClip.w) / 2,
+			(WINDOW_HEIGHT - currentFrameClip.h) / 2,
+			&currentFrameClip);
 
 		SDL_RenderPresent(renderer);
+
+		framesElapsed++;
+		frame = framesElapsed / (FRAMES_COUNT * 3);
+
+		if (frame >= FRAMES_COUNT)
+		{
+			framesElapsed = 0;
+			frame = 0;
+		}
 
 	}
 	
@@ -157,7 +138,7 @@ bool init()
 		return false;
 	}
 
-	renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+	renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
 	if (renderer == nullptr)
 	{
 		std::cerr << "Couldn't create SDL_renderer. SDL Error: " << SDL_GetError() << '\n';
@@ -208,10 +189,32 @@ void close()
 bool loadAllMedia()
 {
 
-	textures[BACKGROUND_TEXTURE].loadFromFile(renderer, "resources\\cplusplus.png");
+	textures[LIGHTER_ANIMATION].loadFromFile(renderer, "resources\\lighter_animation.png");
 
-	textures[BLENDING_TEXTURE].loadFromFile(renderer, "resources\\crying.png");
-	textures[BLENDING_TEXTURE].setBlendMode(SDL_BLENDMODE_BLEND);
+	spriteClips[0].x = 0;
+	spriteClips[0].y = 0;
+	spriteClips[0].w = 200;
+	spriteClips[0].h = 200;
+
+	spriteClips[1].x = 200;
+	spriteClips[1].y = 0;
+	spriteClips[1].w = 200;
+	spriteClips[1].h = 200;
+
+	spriteClips[2].x = 400;
+	spriteClips[2].y = 0;
+	spriteClips[2].w = 200;
+	spriteClips[2].h = 200;
+
+	spriteClips[3].x = 600;
+	spriteClips[3].y = 0;
+	spriteClips[3].w = 200;
+	spriteClips[3].h = 200;
+
+	spriteClips[4].x = 800;
+	spriteClips[4].y = 0;
+	spriteClips[4].w = 200;
+	spriteClips[4].h = 200;
 
 	return true;
 
