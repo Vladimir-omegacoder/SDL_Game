@@ -4,22 +4,15 @@
 #include "SDL_image.h"
 #include "SDL_ttf.h"
 #include "Texture.h"
+#include "Button.h"
 
 
 
-enum KeyPressSurfaces
-{
-	KEY_PRESS_SURFACE_DEFAULT,
-	KEY_PRESS_SURFACE_UP,
-	KEY_PRESS_SURFACE_DOWN,
-	KEY_PRESS_SURFACE_LEFT,
-	KEY_PRESS_SURFACE_RIGHT,
-	KEY_PRESS_SURFACE_TOTAL
-};
+
 
 enum TexturesKey
 {
-	TEXT_TEXTURE,
+	BUTTON_TEXTURE,
 	TEXTURE_TOTAL_COUNT
 };
 
@@ -34,9 +27,9 @@ Texture textures[TEXTURE_TOTAL_COUNT] {};
 
 TTF_Font* font = nullptr;
 
-const size_t FRAMES_COUNT = 5;
-SDL_Rect spriteClips[FRAMES_COUNT];
+SDL_Rect spriteClips[4];
 
+Button buttons[4];
 
 
 bool init();
@@ -69,6 +62,11 @@ int main(int argc, char* args[])
 		return -1;
 	}
 
+	buttons[0].setPosition(0, 0);
+	buttons[1].setPosition(300, 0);
+	buttons[2].setPosition(0, 200);
+	buttons[3].setPosition(300, 200);
+
 	while (quit == false)
 	{
 		while (SDL_PollEvent(&e))
@@ -77,14 +75,19 @@ int main(int argc, char* args[])
 			{
 				quit = true;
 			}
+			for (size_t i = 0; i < 4; i++)
+			{
+				buttons[i].handleEvent(&e);
+			}
 		}
 
 		SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
 		SDL_RenderClear(renderer);
 
-		textures[TEXT_TEXTURE].render(renderer,
-			(WINDOW_WIDTH - textures[TEXT_TEXTURE].getWidth()) / 2,
-			(WINDOW_HEIGHT - textures[TEXT_TEXTURE].getHeight()) / 2);
+		for (size_t i = 0; i < 4; i++)
+		{
+			buttons[i].render();
+		}
 
 		SDL_RenderPresent(renderer);
 
@@ -188,16 +191,29 @@ void close()
 bool loadAllMedia()
 {
 
-	font = TTF_OpenFont("resources\\calibri.ttf", 28);
+	textures[BUTTON_TEXTURE].loadFromFile(renderer, "resources\\button.png");
 
-	if (font == nullptr)
-	{
-		printf("Failed to load lazy font! SDL_ttf Error: %s\n", TTF_GetError());
-		throw;
-	}
+	spriteClips[0].x = 0;
+	spriteClips[0].y = 0;
+	spriteClips[0].w = 300;
+	spriteClips[0].h = 200;
 
-	SDL_Color textColor{ 0, 0, 0 };
-	textures[TEXT_TEXTURE].loadFromRenderedText(renderer, "Some fancy looking text here.", font, textColor);
+	spriteClips[1].x = 300;
+	spriteClips[1].y = 0;
+	spriteClips[1].w = 300;
+	spriteClips[1].h = 200;
+
+	spriteClips[2].x = 0;
+	spriteClips[2].y = 200;
+	spriteClips[2].w = 300;
+	spriteClips[2].h = 200;
+
+	spriteClips[3].x = 300;
+	spriteClips[3].y = 200;
+	spriteClips[3].w = 300;
+	spriteClips[3].h = 200;
+
+	buttonTexture = textures[BUTTON_TEXTURE];
 
 	return true;
 
