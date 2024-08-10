@@ -3,6 +3,7 @@
 #include "SDL.h"
 #include "SDL_image.h"
 #include "SDL_ttf.h"
+#include "SDL_mixer.h"
 #include "Texture.h"
 
 
@@ -22,9 +23,17 @@ SDL_Window* window = nullptr;
 
 SDL_Renderer* renderer = nullptr;
 
+
 Texture textures[TEXTURE_TOTAL_COUNT] {};
 
 SDL_Rect spriteClips[1];
+
+
+Mix_Music* music = nullptr;
+Mix_Chunk* scratch = nullptr;
+Mix_Chunk* high_sound = nullptr;
+Mix_Chunk* medium_sound = nullptr;
+Mix_Chunk* low_sound = nullptr;
 
 
 bool init();
@@ -57,7 +66,7 @@ int main(int argc, char* args[])
 		return -1;
 	}
 
-	float x = (WINDOW_WIDTH - textures[DODIK_TEXTURE].getWidth()) / 2, y = (WINDOW_HEIGHT - textures[DODIK_TEXTURE].getHeight()) / 2;
+	float x = (WINDOW_WIDTH - spriteClips->w) / 2, y = (WINDOW_HEIGHT - spriteClips->h) / 2;
 
 	while (quit == false)
 	{
@@ -67,35 +76,60 @@ int main(int argc, char* args[])
 			{
 				quit = true;
 			}
-		}
+			if (e.type == SDL_KEYDOWN)
+			{
 
-		float offset_x = 0, offset_y = 0;
-		const Uint8* currentKeyStates = SDL_GetKeyboardState(nullptr);
-		const float MOVEMENT_SPEED = 1.5f;
-		if (currentKeyStates[SDL_SCANCODE_W])
-		{
-			offset_y -= MOVEMENT_SPEED;
-		}
-		if (currentKeyStates[SDL_SCANCODE_S])
-		{
-			offset_y += MOVEMENT_SPEED;
-		}
-		if (currentKeyStates[SDL_SCANCODE_D])
-		{
-			offset_x += MOVEMENT_SPEED;
-		}
-		if (currentKeyStates[SDL_SCANCODE_A])
-		{
-			offset_x -= MOVEMENT_SPEED;
-		}
+				if (e.key.keysym.sym == SDLK_1)
+				{
+					Mix_PlayChannel(-1, scratch, 0);
+				}
 
-		x += offset_x;
-		y += offset_y;
+				if (e.key.keysym.sym == SDLK_2)
+				{
+					Mix_PlayChannel(-1, low_sound, 0);
+				}
+
+				if (e.key.keysym.sym == SDLK_3)
+				{
+					Mix_PlayChannel(-1, medium_sound, 0);
+				}
+
+				if (e.key.keysym.sym == SDLK_4)
+				{
+					Mix_PlayChannel(-1, high_sound, 0);
+				}
+
+				if (e.key.keysym.sym == SDLK_5)
+				{
+					if (Mix_PlayingMusic() == 0)
+					{
+						Mix_PlayMusic(music, 0);
+					}
+					else
+					{
+						if (Mix_PausedMusic() == 1)
+						{
+							Mix_ResumeMusic();
+						}
+						else
+						{
+							Mix_PauseMusic();
+						}
+					}
+				}
+
+				if (e.key.keysym.sym == SDLK_0)
+				{
+					Mix_HaltMusic();
+				}
+
+			}
+		}
 
 		SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
 		SDL_RenderClear(renderer);
 
-		textures[DODIK_TEXTURE].render(renderer, x, y);
+		textures[DODIK_TEXTURE].render(renderer, x, y, &spriteClips[0]);
 
 		SDL_RenderPresent(renderer);
 
@@ -112,7 +146,7 @@ int main(int argc, char* args[])
 bool init()
 {
 
-	if (SDL_Init(SDL_INIT_VIDEO) < 0)
+	if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) < 0)
 	{
 		std::cerr << "Couldn't initialize SDL. SDL Error: " << SDL_GetError() << '\n';
 		return false;
@@ -141,6 +175,12 @@ bool init()
 	if (TTF_Init() == -1)
 	{
 		std::cerr << "Couldn't initialize SDL_ttf. SDL ttf Error: " << TTF_GetError() << '\n';
+		return false;
+	}
+
+	if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048) < 0)
+	{
+		std::cerr << "Couldn't initialize SDL_mixer. SDL mixer Error: " << Mix_GetError() << '\n';
 		return false;
 	}
 
@@ -187,6 +227,22 @@ void close()
 	SDL_DestroyWindow(window);
 	window = nullptr;
 
+	Mix_FreeMusic(music);
+	music = nullptr;
+
+	Mix_FreeChunk(scratch);
+	scratch = nullptr;
+
+	Mix_FreeChunk(low_sound);
+	low_sound = nullptr;
+
+	Mix_FreeChunk(medium_sound);
+	medium_sound = nullptr;
+
+	Mix_FreeChunk(high_sound);
+	high_sound = nullptr;
+
+	Mix_Quit();
 	TTF_Quit();
 	IMG_Quit();
 	SDL_Quit();
@@ -197,6 +253,46 @@ bool loadAllMedia()
 {
 
 	textures[DODIK_TEXTURE].loadFromFile(renderer, "resources\\dodik.png");
+
+	spriteClips[0].x = 0;
+	spriteClips[0].y = 0;
+	spriteClips[0].w = 400;
+	spriteClips[0].h = 300;
+
+	music = Mix_LoadMUS("resources\\sick_beat.wav");
+	if (music == nullptr)
+	{
+		std::cerr << "Failed to load beat music. SDL mixer Error: " << Mix_GetError() << '\n';
+		throw;
+	}
+
+	scratch = Mix_LoadWAV("resources\\very_cool_recording.wav");
+	if (scratch == nullptr)
+	{
+		std::cerr << "Failed to load scratch sound effect. SDL mixer Error: " << Mix_GetError() << '\n';
+		throw;
+	}
+
+	low_sound = Mix_LoadWAV("resources\\metal_pipe_low.wav");
+	if (low_sound == nullptr)
+	{
+		std::cerr << "Failed to load low sound effect. SDL mixer Error: " << Mix_GetError() << '\n';
+		throw;
+	}
+
+	medium_sound = Mix_LoadWAV("resources\\metal_pipe_medium.wav");
+	if (medium_sound == nullptr)
+	{
+		std::cerr << "Failed to load medium sound effect. SDL mixer Error: " << Mix_GetError() << '\n';
+		throw;
+	}
+
+	high_sound = Mix_LoadWAV("resources\\metal_pipe_high.wav");
+	if (high_sound == nullptr)
+	{
+		std::cerr << "Failed to load high sound effect. SDL mixer Error: " << Mix_GetError() << '\n';
+		throw;
+	}
 
 	return true;
 
