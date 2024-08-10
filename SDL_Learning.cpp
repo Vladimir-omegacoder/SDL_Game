@@ -4,7 +4,6 @@
 #include "SDL_image.h"
 #include "SDL_ttf.h"
 #include "Texture.h"
-#include "Button.h"
 
 
 
@@ -12,7 +11,7 @@
 
 enum TexturesKey
 {
-	BUTTON_TEXTURE,
+	DODIK_TEXTURE,
 	TEXTURE_TOTAL_COUNT
 };
 
@@ -25,11 +24,7 @@ SDL_Renderer* renderer = nullptr;
 
 Texture textures[TEXTURE_TOTAL_COUNT] {};
 
-TTF_Font* font = nullptr;
-
-SDL_Rect spriteClips[4];
-
-Button buttons[4];
+SDL_Rect spriteClips[1];
 
 
 bool init();
@@ -62,10 +57,7 @@ int main(int argc, char* args[])
 		return -1;
 	}
 
-	buttons[0].setPosition(0, 0);
-	buttons[1].setPosition(300, 0);
-	buttons[2].setPosition(0, 200);
-	buttons[3].setPosition(300, 200);
+	float x = (WINDOW_WIDTH - textures[DODIK_TEXTURE].getWidth()) / 2, y = (WINDOW_HEIGHT - textures[DODIK_TEXTURE].getHeight()) / 2;
 
 	while (quit == false)
 	{
@@ -75,19 +67,35 @@ int main(int argc, char* args[])
 			{
 				quit = true;
 			}
-			for (size_t i = 0; i < 4; i++)
-			{
-				buttons[i].handleEvent(&e);
-			}
 		}
+
+		float offset_x = 0, offset_y = 0;
+		const Uint8* currentKeyStates = SDL_GetKeyboardState(nullptr);
+		const float MOVEMENT_SPEED = 1.5f;
+		if (currentKeyStates[SDL_SCANCODE_W])
+		{
+			offset_y -= MOVEMENT_SPEED;
+		}
+		if (currentKeyStates[SDL_SCANCODE_S])
+		{
+			offset_y += MOVEMENT_SPEED;
+		}
+		if (currentKeyStates[SDL_SCANCODE_D])
+		{
+			offset_x += MOVEMENT_SPEED;
+		}
+		if (currentKeyStates[SDL_SCANCODE_A])
+		{
+			offset_x -= MOVEMENT_SPEED;
+		}
+
+		x += offset_x;
+		y += offset_y;
 
 		SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
 		SDL_RenderClear(renderer);
 
-		for (size_t i = 0; i < 4; i++)
-		{
-			buttons[i].render();
-		}
+		textures[DODIK_TEXTURE].render(renderer, x, y);
 
 		SDL_RenderPresent(renderer);
 
@@ -173,9 +181,6 @@ void close()
 		textures[i].free();
 	}
 
-	TTF_CloseFont(font);
-	font = nullptr;
-
 	SDL_DestroyRenderer(renderer);
 	renderer = nullptr;
 
@@ -191,29 +196,7 @@ void close()
 bool loadAllMedia()
 {
 
-	textures[BUTTON_TEXTURE].loadFromFile(renderer, "resources\\button.png");
-
-	spriteClips[0].x = 0;
-	spriteClips[0].y = 0;
-	spriteClips[0].w = 300;
-	spriteClips[0].h = 200;
-
-	spriteClips[1].x = 300;
-	spriteClips[1].y = 0;
-	spriteClips[1].w = 300;
-	spriteClips[1].h = 200;
-
-	spriteClips[2].x = 0;
-	spriteClips[2].y = 200;
-	spriteClips[2].w = 300;
-	spriteClips[2].h = 200;
-
-	spriteClips[3].x = 300;
-	spriteClips[3].y = 200;
-	spriteClips[3].w = 300;
-	spriteClips[3].h = 200;
-
-	buttonTexture = textures[BUTTON_TEXTURE];
+	textures[DODIK_TEXTURE].loadFromFile(renderer, "resources\\dodik.png");
 
 	return true;
 
