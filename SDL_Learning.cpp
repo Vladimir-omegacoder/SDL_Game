@@ -23,6 +23,8 @@ enum TexturesKey
 
 constexpr int WINDOW_WIDTH = 640;
 constexpr int WINDOW_HEIGHT = 480;
+constexpr int FPS_CAP = 60;
+constexpr int TICKS_PER_FRAME = 1000 / FPS_CAP;
 
 SDL_Window* window = nullptr;
 
@@ -69,6 +71,8 @@ int main(int argc, char* args[])
 
 	Timer fpsTimer;
 
+	Timer capTimer;
+
 	std::stringstream timeText;
 
 	uint32_t frames = 0;
@@ -79,6 +83,8 @@ int main(int argc, char* args[])
 
 	while (quit == false)
 	{
+
+		capTimer.start();
 
 		float avgFps = frames / (fpsTimer.getTicks() / 1000.f);
 
@@ -109,6 +115,12 @@ int main(int argc, char* args[])
 
 		SDL_RenderPresent(renderer);
 		++frames;
+
+		uint32_t frameTicks = capTimer.getTicks();
+		if (frameTicks < TICKS_PER_FRAME)
+		{
+			SDL_Delay(TICKS_PER_FRAME - frameTicks);
+		}
 
 	}
 	
@@ -161,7 +173,7 @@ bool init()
 		return false;
 	}
 
-	renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+	renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
 	if (renderer == nullptr)
 	{
 		std::cerr << "Couldn't create SDL_renderer. SDL Error: " << SDL_GetError() << '\n';
