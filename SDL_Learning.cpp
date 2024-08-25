@@ -17,9 +17,7 @@
 
 enum TexturesKey
 {
-	TEXT_TEXTURE_TIME_ELAPSED,
-	TEXT_TEXTURE_TIME_RESTART,
-	TEXT_TEXTURE_TIME_PAUSE,
+	TEXT_TEXTURE_FPS_COUNT,
 	TEXTURE_TOTAL_COUNT
 };
 
@@ -69,71 +67,48 @@ int main(int argc, char* args[])
 		return -1;
 	}
 
-	Timer timer;
+	Timer fpsTimer;
 
 	std::stringstream timeText;
 
+	uint32_t frames = 0;
+
 	float x, y;
+
+	fpsTimer.start();
 
 	while (quit == false)
 	{
+
+		float avgFps = frames / (fpsTimer.getTicks() / 1000.f);
+
+		if (avgFps > 2000000)
+		{
+			avgFps = 0;
+		}
+
 		while (SDL_PollEvent(&e))
 		{
 			if (e.type == SDL_QUIT)
 			{
 				quit = true;
 			}
-			if (e.type == SDL_KEYDOWN)
-			{
-
-				if (e.key.keysym.sym == SDLK_RETURN)
-				{
-					if (timer.isStarted())
-					{
-						timer.stop();
-					}
-					else
-					{
-						timer.start();
-					}
-				}
-
-				if (e.key.keysym.sym == SDLK_SPACE)
-				{
-					if (timer.isPaused())
-					{
-						timer.unpause();
-					}
-					else
-					{
-						timer.pause();
-					}
-				}
-
-			}
 		}
 
 		timeText.str("");
-		timeText << "You wasted " << timer.getTicks() / 1000.f << " s of your life";
-		textures[TEXT_TEXTURE_TIME_ELAPSED].loadFromRenderedText(
+		timeText << "FPS: " << avgFps;
+		textures[TEXT_TEXTURE_FPS_COUNT].loadFromRenderedText(
 			renderer, timeText.str().c_str(), font, SDL_Color{ 0, 0, 0, 255 });
 
 		SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
 		SDL_RenderClear(renderer);
 
-		x = (WINDOW_WIDTH - textures[TEXT_TEXTURE_TIME_RESTART].getWidth()) / 2;
-		y = 100;
-		textures[TEXT_TEXTURE_TIME_RESTART].render(renderer, x, y);
-
-		x = (WINDOW_WIDTH - textures[TEXT_TEXTURE_TIME_PAUSE].getWidth()) / 2;
-		y = 130;
-		textures[TEXT_TEXTURE_TIME_PAUSE].render(renderer, x, y);
-
-		x = (WINDOW_WIDTH - textures[TEXT_TEXTURE_TIME_ELAPSED].getWidth()) / 2;
-		y = (WINDOW_HEIGHT - textures[TEXT_TEXTURE_TIME_ELAPSED].getHeight()) / 2;
-		textures[TEXT_TEXTURE_TIME_ELAPSED].render(renderer, x, y);
+		x = (WINDOW_WIDTH - textures[TEXT_TEXTURE_FPS_COUNT].getWidth()) / 2;
+		y = (WINDOW_HEIGHT - textures[TEXT_TEXTURE_FPS_COUNT].getHeight()) / 2;
+		textures[TEXT_TEXTURE_FPS_COUNT].render(renderer, x, y);
 
 		SDL_RenderPresent(renderer);
+		++frames;
 
 	}
 	
@@ -248,18 +223,6 @@ bool loadAllMedia()
 	{
 		std::cerr << "Failed to load the font. SDL ttf Error: " << TTF_GetError() << '\n';
 		throw;
-	}
-
-	try
-	{
-		textures[TEXT_TEXTURE_TIME_RESTART].loadFromRenderedText(
-			renderer, "Press Enter to start/stop wasting your time", font, SDL_Color{ 0, 0, 0, 255 });
-		textures[TEXT_TEXTURE_TIME_PAUSE].loadFromRenderedText(
-			renderer, "Press Space to pause/unpause time wasting", font, SDL_Color{ 0, 0, 0, 255 });
-	}
-	catch (const std::exception& ex)
-	{
-		std::cerr << "Failed to load the texture.\n";
 	}
 
 	return true;
