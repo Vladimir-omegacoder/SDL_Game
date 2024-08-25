@@ -7,9 +7,11 @@
 #include "SDL_image.h"
 #include "SDL_ttf.h"
 #include "SDL_mixer.h"
+#include "ginner_math.h"
 
 #include "Texture.h"
 #include "Timer.h"
+#include "Player.h"
 
 
 
@@ -17,14 +19,12 @@
 
 enum TexturesKey
 {
-	TEXT_TEXTURE_FPS_COUNT,
+	PLAYER_TEXTURE,
 	TEXTURE_TOTAL_COUNT
 };
 
 constexpr int WINDOW_WIDTH = 640;
 constexpr int WINDOW_HEIGHT = 480;
-constexpr int FPS_CAP = 60;
-constexpr int TICKS_PER_FRAME = 1000 / FPS_CAP;
 
 SDL_Window* window = nullptr;
 
@@ -69,24 +69,20 @@ int main(int argc, char* args[])
 		return -1;
 	}
 
-	Timer fpsTimer;
-
-	Timer capTimer;
-
-	std::stringstream timeText;
-
+	Timer timer;
 	uint32_t frames = 0;
 
-	float x, y;
+	Player player;
+	player.setDimensions(gin::vec2f(100, 100));
+	player.setTexture(&textures[PLAYER_TEXTURE]);
+	player.setPosition(gin::vec2f(WINDOW_WIDTH - 100, WINDOW_HEIGHT - 100) / 2.f);
 
-	fpsTimer.start();
+	timer.start();
 
 	while (quit == false)
 	{
 
-		capTimer.start();
-
-		float avgFps = frames / (fpsTimer.getTicks() / 1000.f);
+		float avgFps = frames / (timer.getTicks() / 1000.f);
 
 		if (avgFps > 2000000)
 		{
@@ -99,28 +95,27 @@ int main(int argc, char* args[])
 			{
 				quit = true;
 			}
+
+			player.handleEvent(e);
+
 		}
 
-		timeText.str("");
-		timeText << "FPS: " << avgFps;
-		textures[TEXT_TEXTURE_FPS_COUNT].loadFromRenderedText(
-			renderer, timeText.str().c_str(), font, SDL_Color{ 0, 0, 0, 255 });
+		if (avgFps > 0)
+		{
+			player.move(avgFps);
+		}
+		else
+		{
+			player.move(1);
+		}
 
 		SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
 		SDL_RenderClear(renderer);
 
-		x = (WINDOW_WIDTH - textures[TEXT_TEXTURE_FPS_COUNT].getWidth()) / 2;
-		y = (WINDOW_HEIGHT - textures[TEXT_TEXTURE_FPS_COUNT].getHeight()) / 2;
-		textures[TEXT_TEXTURE_FPS_COUNT].render(renderer, x, y);
+		player.render(renderer);
 
 		SDL_RenderPresent(renderer);
 		++frames;
-
-		uint32_t frameTicks = capTimer.getTicks();
-		if (frameTicks < TICKS_PER_FRAME)
-		{
-			SDL_Delay(TICKS_PER_FRAME - frameTicks);
-		}
 
 	}
 	
@@ -173,7 +168,7 @@ bool init()
 		return false;
 	}
 
-	renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+	renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
 	if (renderer == nullptr)
 	{
 		std::cerr << "Couldn't create SDL_renderer. SDL Error: " << SDL_GetError() << '\n';
@@ -236,6 +231,8 @@ bool loadAllMedia()
 		std::cerr << "Failed to load the font. SDL ttf Error: " << TTF_GetError() << '\n';
 		throw;
 	}
+
+	textures[PLAYER_TEXTURE].loadFromFile(renderer, "resources\\dodik.png");
 
 	return true;
 
