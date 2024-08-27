@@ -73,9 +73,15 @@ int main(int argc, char* args[])
 	uint32_t frames = 0;
 
 	Player player;
-	player.setDimensions(gin::vec2f(100, 100));
+	player.setHitbox(SDL_Rect{ 0, 0, 100, 100 });
 	player.setTexture(&textures[PLAYER_TEXTURE]);
-	player.setPosition(gin::vec2f(WINDOW_WIDTH - 100, WINDOW_HEIGHT - 100) / 2.f);
+	player.setPosition(gin::vec2f(100, 100) / 2.f);
+
+	SDL_Rect wall;
+	wall.x = 340;
+	wall.y = 180;
+	wall.w = 100;
+	wall.h = 40;
 
 	timer.start();
 
@@ -102,15 +108,18 @@ int main(int argc, char* args[])
 
 		if (avgFps > 0)
 		{
-			player.move(avgFps);
+			player.move(avgFps, wall);
 		}
 		else
 		{
-			player.move(1);
+			player.move(1, wall);
 		}
 
 		SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
 		SDL_RenderClear(renderer);
+
+		SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+		SDL_RenderDrawRect(renderer, &wall);
 
 		player.render(renderer);
 

@@ -2,11 +2,13 @@
 
 const float Player::MAX_VELOCITY = 500.f;
 
-Player::Player() : _dimensions(0, 0), _position(0, 0), _velocity(0, 0), _texture(nullptr) {}
+Player::Player() : _position(0, 0), _velocity(0, 0), _hitbox(), _texture(nullptr) {}
 
-void Player::setDimensions(const gin::vec2f& dimensions)
+void Player::setHitbox(const SDL_Rect& hitbox)
 {
-	_dimensions = dimensions;
+    _hitbox = hitbox;
+    _position.x = hitbox.x;
+    _position.y = hitbox.y;
 }
 
 void Player::setTexture(const Texture* texture)
@@ -17,11 +19,13 @@ void Player::setTexture(const Texture* texture)
 void Player::setPosition(const gin::vec2f& position)
 {
     _position = position;
+    _hitbox.x = position.x;
+    _hitbox.y = position.y;
 }
 
-gin::vec2f Player::getDimensions() const
+SDL_Rect Player::getHitbox() const
 {
-	return _dimensions;
+    return _hitbox;
 }
 
 const Texture* Player::getTexture() const
@@ -78,21 +82,27 @@ void Player::handleEvent(SDL_Event& e)
 
 }
 
-void Player::move(uint32_t ticks)
+void Player::move(uint32_t ticks, SDL_Rect& wall)
 {
 
-    gin::vec2f _offset = _velocity / static_cast<float>(ticks);
+    gin::vec2f offset = _velocity / static_cast<float>(ticks);
 
-    _position += _offset;
+    _position.x += offset.x;
+    _hitbox.x = _position.x;
 
-    if (_position.x < 0 || _position.x + _dimensions.x > WINDOW_WIDTH)
+    if (_position.x < 0 || (_position.x + _hitbox.w > WINDOW_WIDTH) || checkCollision(_hitbox, wall))
     {
-        _position.x -= _offset.x;
+        _position.x -= offset.x;
+        _hitbox.x = _position.x;
     }
 
-    if (_position.y < 0 || _position.y + _dimensions.y > WINDOW_HEIGHT)
+    _position.y += offset.y;
+    _hitbox.y = _position.y;
+
+    if (_position.y < 0 || (_position.y + _hitbox.h > WINDOW_HEIGHT) || checkCollision(_hitbox, wall))
     {
-        _position.y -= _offset.y;
+        _position.y -= offset.y;
+        _hitbox.y = _position.y;
     }
 
 }
@@ -100,4 +110,17 @@ void Player::move(uint32_t ticks)
 void Player::render(SDL_Renderer* renderer) const
 {
     _texture->render(renderer, _position.x, _position.y);
+}
+
+bool Player::checkCollision(const SDL_Rect& a, const SDL_Rect& b)
+{
+    if (a.x + a.w < b.x || a.x > b.x + b.w)
+    {
+        return false;
+    }
+    if (a.y + a.h < b.y || a.y > b.y + b.h)
+    {
+        return false;
+    }
+    return true;
 }
