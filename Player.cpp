@@ -1,14 +1,12 @@
 #include "Player.h"
 
-const float Player::MAX_VELOCITY = 500.f;
+const float Player::MAX_VELOCITY = 100.f;
 
-Player::Player() : _position(0, 0), _velocity(0, 0), _hitbox(), _texture(nullptr) {}
+Player::Player() : _position(0, 0), _velocity(0, 0), _localBounds(), _colliders(), _texture(nullptr) {}
 
-void Player::setHitbox(const SDL_Rect& hitbox)
+void Player::setLocalBounds(const SDL_Rect& localBounds)
 {
-    _hitbox = hitbox;
-    _position.x = hitbox.x;
-    _position.y = hitbox.y;
+    _localBounds = localBounds;
 }
 
 void Player::setTexture(const Texture* texture)
@@ -19,13 +17,16 @@ void Player::setTexture(const Texture* texture)
 void Player::setPosition(const gin::vec2f& position)
 {
     _position = position;
-    _hitbox.x = position.x;
-    _hitbox.y = position.y;
 }
 
-SDL_Rect Player::getHitbox() const
+void Player::setColliders(const std::vector<SDL_Rect>& colliders)
 {
-    return _hitbox;
+    _colliders = colliders;
+}
+
+SDL_Rect Player::getLocalBounds() const
+{
+    return _localBounds;
 }
 
 const Texture* Player::getTexture() const
@@ -36,6 +37,16 @@ const Texture* Player::getTexture() const
 gin::vec2f Player::getPosition() const
 {
     return _position;
+}
+
+const std::vector<SDL_Rect>& Player::getColliders() const
+{
+    return _colliders;
+}
+
+std::vector<SDL_Rect>& Player::getColliders()
+{
+    return _colliders;
 }
 
 void Player::handleEvent(SDL_Event& e)
@@ -82,27 +93,68 @@ void Player::handleEvent(SDL_Event& e)
 
 }
 
-void Player::move(uint32_t ticks, SDL_Rect& wall)
+void Player::move(uint32_t ticks, const std::vector<SDL_Rect>& walls)
 {
 
     gin::vec2f offset = _velocity / static_cast<float>(ticks);
 
-    _position.x += offset.x;
-    _hitbox.x = _position.x;
+    SDL_Rect globalBounds;
 
-    if (_position.x < 0 || (_position.x + _hitbox.w > WINDOW_WIDTH) || checkCollision(_hitbox, wall))
+    _position.x += offset.x;
+
+    globalBounds.x = _position.x + _localBounds.x;
+    globalBounds.w = _localBounds.w;
+    globalBounds.y = _position.y + _localBounds.y;
+    globalBounds.h = _localBounds.h;
+
+    for (auto& i : walls)
     {
-        _position.x -= offset.x;
-        _hitbox.x = _position.x;
+
+        if (checkCollision(globalBounds, i))
+        {
+            for (auto& j : _colliders)
+            {
+                SDL_Rect colliderBounds;
+                colliderBounds.x = globalBounds.x + j.x;
+                colliderBounds.w = j.w;
+                colliderBounds.y = globalBounds.y + j.y;
+                colliderBounds.h = j.h;
+                if (checkCollision(colliderBounds, i))
+                {
+                    _position.x -= offset.x;
+                    break;
+                }
+            }
+            break;
+        }
+
     }
 
     _position.y += offset.y;
-    _hitbox.y = _position.y;
 
-    if (_position.y < 0 || (_position.y + _hitbox.h > WINDOW_HEIGHT) || checkCollision(_hitbox, wall))
+    globalBounds.x = _position.x + _localBounds.x;
+    globalBounds.w = _localBounds.w;
+    globalBounds.y = _position.y + _localBounds.y;
+    globalBounds.h = _localBounds.h;
+
+    for (auto& i : walls)
     {
-        _position.y -= offset.y;
-        _hitbox.y = _position.y;
+
+        for (auto& j : _colliders)
+        {
+            SDL_Rect colliderBounds;
+            colliderBounds.x = globalBounds.x + j.x;
+            colliderBounds.w = j.w;
+            colliderBounds.y = globalBounds.y + j.y;
+            colliderBounds.h = j.h;
+            if (checkCollision(colliderBounds, i))
+            {
+                _position.y -= offset.y;
+                break;
+            }
+        }
+        break;
+
     }
 
 }

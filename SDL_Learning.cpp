@@ -2,6 +2,7 @@
 #include <string>
 #include <exception>
 #include <sstream>
+#include <vector>
 
 #include "SDL.h"
 #include "SDL_image.h"
@@ -73,15 +74,29 @@ int main(int argc, char* args[])
 	uint32_t frames = 0;
 
 	Player player;
-	player.setHitbox(SDL_Rect{ 0, 0, 100, 100 });
+	player.setLocalBounds(SDL_Rect{ 0, 0, 100, 100 });
 	player.setTexture(&textures[PLAYER_TEXTURE]);
 	player.setPosition(gin::vec2f(100, 100) / 2.f);
+
+	std::vector<SDL_Rect> playerColliders;
+	playerColliders.push_back(SDL_Rect{ 27, 2, 50, 16 });
+	playerColliders.push_back(SDL_Rect{ 12, 16, 75, 16 });
+	playerColliders.push_back(SDL_Rect{ 7, 32, 86, 16 });
+	playerColliders.push_back(SDL_Rect{ 7, 48, 90, 16 });
+	playerColliders.push_back(SDL_Rect{ 7, 64, 92, 16 });
+	playerColliders.push_back(SDL_Rect{ 13, 80, 85, 16 });
+	player.setColliders(playerColliders);
+
+
+	std::vector<SDL_Rect> walls;
 
 	SDL_Rect wall;
 	wall.x = 340;
 	wall.y = 180;
 	wall.w = 100;
 	wall.h = 40;
+
+	walls.push_back(wall);
 
 	timer.start();
 
@@ -108,18 +123,21 @@ int main(int argc, char* args[])
 
 		if (avgFps > 0)
 		{
-			player.move(avgFps, wall);
+			player.move(avgFps, walls);
 		}
 		else
 		{
-			player.move(1, wall);
+			player.move(1, walls);
 		}
 
 		SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
 		SDL_RenderClear(renderer);
 
 		SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-		SDL_RenderDrawRect(renderer, &wall);
+		for (auto& i : walls)
+		{
+			SDL_RenderDrawRect(renderer, &i);
+		}
 
 		player.render(renderer);
 
