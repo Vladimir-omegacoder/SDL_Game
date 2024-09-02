@@ -78,14 +78,7 @@ int main(int argc, char* args[])
 	player.setTexture(&textures[PLAYER_TEXTURE]);
 	player.setPosition(gin::vec2f(100, 100) / 2.f);
 
-	std::vector<SDL_Rect> playerColliders;
-	playerColliders.push_back(SDL_Rect{ 27, 2, 50, 16 });
-	playerColliders.push_back(SDL_Rect{ 12, 16, 75, 16 });
-	playerColliders.push_back(SDL_Rect{ 7, 32, 86, 16 });
-	playerColliders.push_back(SDL_Rect{ 7, 48, 90, 16 });
-	playerColliders.push_back(SDL_Rect{ 7, 64, 92, 16 });
-	playerColliders.push_back(SDL_Rect{ 13, 80, 85, 16 });
-	player.setColliders(playerColliders);
+	player.setCollider(Circle{gin::vec2f(50, 50), 50});
 
 
 	std::vector<SDL_Rect> walls;
@@ -259,7 +252,7 @@ bool loadAllMedia()
 		throw;
 	}
 
-	textures[PLAYER_TEXTURE].loadFromFile(renderer, "resources\\dodik.png");
+	textures[PLAYER_TEXTURE].loadFromFile(renderer, "resources\\circle.png");
 
 	return true;
 

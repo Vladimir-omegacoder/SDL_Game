@@ -2,7 +2,7 @@
 
 const float Player::MAX_VELOCITY = 100.f;
 
-Player::Player() : _position(0, 0), _velocity(0, 0), _localBounds(), _colliders(), _texture(nullptr) {}
+Player::Player() : _position(0, 0), _velocity(0, 0), _localBounds(), _collider(), _texture(nullptr) {}
 
 void Player::setLocalBounds(const SDL_Rect& localBounds)
 {
@@ -19,9 +19,9 @@ void Player::setPosition(const gin::vec2f& position)
     _position = position;
 }
 
-void Player::setColliders(const std::vector<SDL_Rect>& colliders)
+void Player::setCollider(const Circle& collider)
 {
-    _colliders = colliders;
+    _collider = collider;
 }
 
 SDL_Rect Player::getLocalBounds() const
@@ -39,14 +39,14 @@ gin::vec2f Player::getPosition() const
     return _position;
 }
 
-const std::vector<SDL_Rect>& Player::getColliders() const
+const Circle& Player::getCollider() const
 {
-    return _colliders;
+    return _collider;
 }
 
-std::vector<SDL_Rect>& Player::getColliders()
+Circle& Player::getCollider()
 {
-    return _colliders;
+    return _collider;
 }
 
 void Player::handleEvent(SDL_Event& e)
@@ -99,6 +99,7 @@ void Player::move(uint32_t ticks, const std::vector<SDL_Rect>& walls)
     gin::vec2f offset = _velocity / static_cast<float>(ticks);
 
     SDL_Rect globalBounds;
+    Circle colliderGlobalBounds;
 
     _position.x += offset.x;
 
@@ -107,27 +108,17 @@ void Player::move(uint32_t ticks, const std::vector<SDL_Rect>& walls)
     globalBounds.y = _position.y + _localBounds.y;
     globalBounds.h = _localBounds.h;
 
+    colliderGlobalBounds.position.x = globalBounds.x + _collider.position.x;
+    colliderGlobalBounds.position.y = globalBounds.y + _collider.position.y;
+    colliderGlobalBounds.radius = _collider.radius;
+
     for (auto& i : walls)
     {
-
-        if (checkCollision(globalBounds, i))
+        if (checkCollision(colliderGlobalBounds, i))
         {
-            for (auto& j : _colliders)
-            {
-                SDL_Rect colliderBounds;
-                colliderBounds.x = globalBounds.x + j.x;
-                colliderBounds.w = j.w;
-                colliderBounds.y = globalBounds.y + j.y;
-                colliderBounds.h = j.h;
-                if (checkCollision(colliderBounds, i))
-                {
-                    _position.x -= offset.x;
-                    break;
-                }
-            }
+            _position.x -= offset.x;
             break;
         }
-
     }
 
     _position.y += offset.y;
@@ -137,24 +128,17 @@ void Player::move(uint32_t ticks, const std::vector<SDL_Rect>& walls)
     globalBounds.y = _position.y + _localBounds.y;
     globalBounds.h = _localBounds.h;
 
+    colliderGlobalBounds.position.x = globalBounds.x + _collider.position.x;
+    colliderGlobalBounds.position.y = globalBounds.y + _collider.position.y;
+    colliderGlobalBounds.radius = _collider.radius;
+
     for (auto& i : walls)
     {
-
-        for (auto& j : _colliders)
+        if (checkCollision(colliderGlobalBounds, i))
         {
-            SDL_Rect colliderBounds;
-            colliderBounds.x = globalBounds.x + j.x;
-            colliderBounds.w = j.w;
-            colliderBounds.y = globalBounds.y + j.y;
-            colliderBounds.h = j.h;
-            if (checkCollision(colliderBounds, i))
-            {
-                _position.y -= offset.y;
-                break;
-            }
+            _position.y -= offset.y;
+            break;
         }
-        break;
-
     }
 
 }
@@ -175,4 +159,48 @@ bool Player::checkCollision(const SDL_Rect& a, const SDL_Rect& b)
         return false;
     }
     return true;
+}
+
+bool Player::checkCollision(const Circle& a, const Circle& b)
+{
+    return gin::distance(a.position, b.position) < (a.radius + b.radius);
+}
+
+bool Player::checkCollision(const SDL_Rect& a, const Circle& b)
+{
+    
+    gin::vec2f closest_point;
+    if (b.position.x < a.x)
+    {
+        closest_point.x = a.x;
+    }
+    else if (b.position.x > a.x + a.w)
+    {
+        closest_point.x = a.x + a.w;
+    }
+    else
+    {
+        closest_point.x = b.position.x;
+    }
+
+    if (b.position.y < a.y)
+    {
+        closest_point.y = a.y;
+    }
+    else if (b.position.y > a.y + a.h)
+    {
+        closest_point.y = a.y + a.h;
+    }
+    else
+    {
+        closest_point.y = b.position.y;
+    }
+
+    return gin::distance(closest_point, b.position) < b.radius;
+
+}
+
+bool Player::checkCollision(const Circle& a, const SDL_Rect& b)
+{
+    return checkCollision(b, a);
 }

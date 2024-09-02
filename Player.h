@@ -12,6 +12,14 @@
 extern const int WINDOW_WIDTH;
 extern const int WINDOW_HEIGHT;
 
+
+struct Circle
+{
+	gin::vec2f position;
+	float radius;
+};
+
+
 class Player
 {
 
@@ -20,7 +28,7 @@ private:
 	gin::vec2f _position;
 	gin::vec2f _velocity;
 	SDL_Rect _localBounds;
-	std::vector<SDL_Rect> _colliders;
+	Circle _collider;
 
 	const Texture* _texture;
 
@@ -33,13 +41,13 @@ public:
 	void setLocalBounds(const SDL_Rect& localBounds);
 	void setTexture(const Texture* texture);
 	void setPosition(const gin::vec2f& position);
-	void setColliders(const std::vector<SDL_Rect>& colliders);
+	void setCollider(const Circle& collider);
 
 	SDL_Rect getLocalBounds() const;
 	const Texture* getTexture() const;
 	gin::vec2f getPosition() const;
-	const std::vector<SDL_Rect>& getColliders() const;
-	std::vector<SDL_Rect>& getColliders();
+	const Circle& getCollider() const;
+	Circle& getCollider();
 
 	void handleEvent(SDL_Event& e);
 
@@ -48,6 +56,12 @@ public:
 	void render(SDL_Renderer* renderer) const;
 
 	static bool checkCollision(const SDL_Rect& a, const SDL_Rect& b);
+
+	static bool checkCollision(const Circle& a, const Circle& b);
+
+	static bool checkCollision(const SDL_Rect& a, const Circle& b);
+
+	static bool checkCollision(const Circle& a, const SDL_Rect& b);
 
 };
 
