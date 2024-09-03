@@ -1,6 +1,6 @@
 #include "Player.h"
 
-const float Player::MAX_VELOCITY = 100.f;
+const float Player::MAX_VELOCITY = 300.f;
 
 Player::Player() : _position(0, 0), _velocity(0, 0), _localBounds(), _collider(), _texture(nullptr) {}
 
@@ -143,9 +143,9 @@ void Player::move(uint32_t ticks, const std::vector<SDL_Rect>& walls)
 
 }
 
-void Player::render(SDL_Renderer* renderer) const
+void Player::render(SDL_Renderer* renderer, const gin::vec2f& camera_pos) const
 {
-    _texture->render(renderer, _position.x, _position.y);
+    _texture->render(renderer, _position.x - camera_pos.x - _localBounds.w / 2, _position.y - camera_pos.y - _localBounds.h / 2);
 }
 
 bool Player::checkCollision(const SDL_Rect& a, const SDL_Rect& b)

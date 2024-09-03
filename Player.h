@@ -53,7 +53,7 @@ public:
 
 	void move(uint32_t ticks, const std::vector<SDL_Rect>& walls);
 
-	void render(SDL_Renderer* renderer) const;
+	void render(SDL_Renderer* renderer, const gin::vec2f& camera_pos) const;
 
 	static bool checkCollision(const SDL_Rect& a, const SDL_Rect& b);
 

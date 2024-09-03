@@ -21,11 +21,15 @@
 enum TexturesKey
 {
 	PLAYER_TEXTURE,
+	BACKGROUND_TEXTURE,
 	TEXTURE_TOTAL_COUNT
 };
 
 constexpr int WINDOW_WIDTH = 640;
 constexpr int WINDOW_HEIGHT = 480;
+
+const int LEVEL_WIDTH = 1920;
+const int LEVEL_HEIGHT = 1440;
 
 SDL_Window* window = nullptr;
 
@@ -73,10 +77,11 @@ int main(int argc, char* args[])
 	Timer timer;
 	uint32_t frames = 0;
 
+	SDL_Rect camera{ 0, 0, WINDOW_WIDTH, WINDOW_HEIGHT };
+
 	Player player;
 	player.setLocalBounds(SDL_Rect{ 0, 0, 100, 100 });
 	player.setTexture(&textures[PLAYER_TEXTURE]);
-	player.setPosition(gin::vec2f(100, 100) / 2.f);
 
 	player.setCollider(Circle{gin::vec2f(50, 50), 50});
 
@@ -84,7 +89,7 @@ int main(int argc, char* args[])
 	std::vector<SDL_Rect> walls;
 
 	SDL_Rect wall;
-	wall.x = 340;
+	wall.x = 500;
 	wall.y = 180;
 	wall.w = 100;
 	wall.h = 40;
@@ -123,16 +128,34 @@ int main(int argc, char* args[])
 			player.move(1, walls);
 		}
 
+		camera.x = player.getPosition().x + player.getLocalBounds().x / 2.f - camera.w / 2.f;
+		camera.y = player.getPosition().y + player.getLocalBounds().y / 2.f - camera.h / 2.f;
+
 		SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
 		SDL_RenderClear(renderer);
 
-		SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-		for (auto& i : walls)
+		for (float y = -LEVEL_HEIGHT / 2; y < LEVEL_HEIGHT / 2; y += textures[BACKGROUND_TEXTURE].getHeight())
 		{
-			SDL_RenderDrawRect(renderer, &i);
+			for (float x = -LEVEL_WIDTH / 2; x < LEVEL_WIDTH / 2; x += textures[BACKGROUND_TEXTURE].getWidth())
+			{
+				textures[BACKGROUND_TEXTURE].render(renderer, x - camera.x - player.getLocalBounds().w / 2.f,
+					y - camera.y - player.getLocalBounds().h / 2.f);
+			}
 		}
 
-		player.render(renderer);
+		SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
+		for (auto& i : walls)
+		{
+			SDL_Rect camera_relative;
+			camera_relative.w = i.w;
+			camera_relative.h = i.h;
+			camera_relative.x = i.x - camera.x - player.getLocalBounds().w / 2.f;
+			camera_relative.y = i.y - camera.y - player.getLocalBounds().h / 2.f;
+			SDL_RenderDrawRect(renderer, &camera_relative);
+		}
+		SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+
+		player.render(renderer, gin::vec2f(camera.x, camera.y));
 
 		SDL_RenderPresent(renderer);
 		++frames;
@@ -252,7 +275,8 @@ bool loadAllMedia()
 		throw;
 	}
 
-	textures[PLAYER_TEXTURE].loadFromFile(renderer, "resources\\circle.png");
+	textures[PLAYER_TEXTURE].loadFromFile(renderer, "resources\\ufo_1.png");
+	textures[BACKGROUND_TEXTURE].loadFromFile(renderer, "resources\\space.png");
 
 	return true;
 
