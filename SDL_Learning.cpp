@@ -28,8 +28,8 @@ enum TexturesKey
 constexpr int WINDOW_WIDTH = 640;
 constexpr int WINDOW_HEIGHT = 480;
 
-const int LEVEL_WIDTH = 1920;
-const int LEVEL_HEIGHT = 1440;
+const int LEVEL_WIDTH = 1280;
+const int LEVEL_HEIGHT = 960;
 
 SDL_Window* window = nullptr;
 
@@ -53,6 +53,8 @@ void close();
 bool loadAllMedia();
 
 SDL_Texture* loadTexture(const std::string& path);
+
+void renderBackground(SDL_Rect backgroundBounds);
 
 
 
@@ -84,7 +86,6 @@ int main(int argc, char* args[])
 	player.setTexture(&textures[PLAYER_TEXTURE]);
 
 	player.setCollider(Circle{gin::vec2f(50, 50), 50});
-
 
 	std::vector<SDL_Rect> walls;
 
@@ -134,14 +135,15 @@ int main(int argc, char* args[])
 		SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
 		SDL_RenderClear(renderer);
 
-		for (float y = -LEVEL_HEIGHT / 2; y < LEVEL_HEIGHT / 2; y += textures[BACKGROUND_TEXTURE].getHeight())
-		{
-			for (float x = -LEVEL_WIDTH / 2; x < LEVEL_WIDTH / 2; x += textures[BACKGROUND_TEXTURE].getWidth())
-			{
-				textures[BACKGROUND_TEXTURE].render(renderer, x - camera.x - player.getLocalBounds().w / 2.f,
-					y - camera.y - player.getLocalBounds().h / 2.f);
-			}
-		}
+		SDL_Rect backgroundBounds;
+		backgroundBounds.w = LEVEL_WIDTH;
+		backgroundBounds.h = LEVEL_HEIGHT;
+		backgroundBounds.x = 0;
+		backgroundBounds.y = 0;
+
+		backgroundBounds.x = -camera.x - backgroundBounds.w / 2;
+		backgroundBounds.y = -camera.y - backgroundBounds.h / 2;
+		renderBackground(backgroundBounds);
 
 		SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
 		for (auto& i : walls)
@@ -296,4 +298,20 @@ SDL_Texture* loadTexture(const std::string& path)
 
 	return newTexture;
 
+}
+
+void renderBackground(SDL_Rect backgroundBounds)
+{
+
+	size_t textureWidth = textures[BACKGROUND_TEXTURE].getWidth();
+	size_t textureHeight = textures[BACKGROUND_TEXTURE].getHeight();
+
+	for (size_t i = 0; i < backgroundBounds.w / textureWidth; i++)
+	{
+		for (size_t j = 0; j < backgroundBounds.h / textureHeight; j++)
+		{
+			textures[BACKGROUND_TEXTURE].render(renderer,
+				backgroundBounds.x + i * textureWidth, backgroundBounds.y + j * textureHeight);
+		}
+	}
 }
