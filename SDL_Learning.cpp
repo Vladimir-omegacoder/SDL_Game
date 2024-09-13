@@ -20,8 +20,7 @@
 
 enum TexturesKey
 {
-	PLAYER_TEXTURE,
-	BACKGROUND_TEXTURE,
+	INPUT_TEXTURE,
 	TEXTURE_TOTAL_COUNT
 };
 
@@ -54,8 +53,6 @@ bool loadAllMedia();
 
 SDL_Texture* loadTexture(const std::string& path);
 
-void renderBackground(SDL_Rect backgroundBounds);
-
 
 
 int main(int argc, char* args[])
@@ -76,93 +73,83 @@ int main(int argc, char* args[])
 		return -1;
 	}
 
-	Timer timer;
-	uint32_t frames = 0;
+	SDL_Color textColor = { 0, 0, 0, 0xFF };
+	std::string inputText = "Some text";
+	textures[INPUT_TEXTURE].loadFromRenderedText(renderer, inputText, font, textColor);
 
-	SDL_Rect camera{ 0, 0, WINDOW_WIDTH, WINDOW_HEIGHT };
-
-	Player player;
-	player.setLocalBounds(SDL_Rect{ 0, 0, 100, 100 });
-	player.setTexture(&textures[PLAYER_TEXTURE]);
-
-	player.setCollider(Circle{gin::vec2f(50, 50), 50});
-
-	std::vector<SDL_Rect> walls;
-
-	SDL_Rect wall;
-	wall.x = 500;
-	wall.y = 180;
-	wall.w = 100;
-	wall.h = 40;
-
-	walls.push_back(wall);
-
-	timer.start();
+	SDL_StartTextInput();
 
 	while (quit == false)
 	{
 
-		float avgFps = frames / (timer.getTicks() / 1000.f);
-
-		if (avgFps > 2000000)
-		{
-			avgFps = 0;
-		}
+		bool renderText = false;
 
 		while (SDL_PollEvent(&e))
 		{
+
 			if (e.type == SDL_QUIT)
 			{
 				quit = true;
 			}
+			if (e.type == SDL_KEYDOWN)
+			{
+				if (e.key.keysym.sym == SDLK_BACKSPACE && inputText.length() > 0)
+				{
+					inputText.pop_back();
+					renderText = true;
+				}
+				if (e.key.keysym.sym == SDLK_c && SDL_GetModState() & KMOD_CTRL)
+				{
+					SDL_SetClipboardText(inputText.c_str());
+				}
+				if (e.key.keysym.sym == SDLK_v && SDL_GetModState() & KMOD_CTRL)
+				{
+					char* tempText = SDL_GetClipboardText();
+					inputText = tempText;
+					SDL_free(tempText);
 
-			player.handleEvent(e);
-
+					renderText = true;
+				}
+				
+			}
+			if (e.type == SDL_TEXTINPUT)
+			{
+				if (!(SDL_GetModState() & KMOD_CTRL && (e.text.text[0] == 'c' || e.text.text[0] == 'C' || e.text.text[0] == 'v' || e.text.text[0] == 'V')))
+				{
+					inputText += e.text.text;
+					renderText = true;
+				}
+			}
+			
 		}
 
-		if (avgFps > 0)
-		{
-			player.move(avgFps, walls);
-		}
-		else
-		{
-			player.move(1, walls);
-		}
-
-		camera.x = player.getPosition().x + player.getLocalBounds().x / 2.f - camera.w / 2.f;
-		camera.y = player.getPosition().y + player.getLocalBounds().y / 2.f - camera.h / 2.f;
+		
 
 		SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
 		SDL_RenderClear(renderer);
 
-		SDL_Rect backgroundBounds;
-		backgroundBounds.w = LEVEL_WIDTH;
-		backgroundBounds.h = LEVEL_HEIGHT;
-		backgroundBounds.x = 0;
-		backgroundBounds.y = 0;
 
-		backgroundBounds.x = -camera.x - backgroundBounds.w / 2;
-		backgroundBounds.y = -camera.y - backgroundBounds.h / 2;
-		renderBackground(backgroundBounds);
-
-		SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
-		for (auto& i : walls)
+		if (renderText)
 		{
-			SDL_Rect camera_relative;
-			camera_relative.w = i.w;
-			camera_relative.h = i.h;
-			camera_relative.x = i.x - camera.x - player.getLocalBounds().w / 2.f;
-			camera_relative.y = i.y - camera.y - player.getLocalBounds().h / 2.f;
-			SDL_RenderDrawRect(renderer, &camera_relative);
+			if (inputText != "")
+			{
+				textures[INPUT_TEXTURE].loadFromRenderedText(renderer, inputText, font, textColor);
+			}
+			else
+			{
+				textures[INPUT_TEXTURE].loadFromRenderedText(renderer, " ", font, textColor);
+			}
 		}
-		SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
 
-		player.render(renderer, gin::vec2f(camera.x, camera.y));
+		textures[INPUT_TEXTURE].render(renderer,
+			(WINDOW_WIDTH - textures[INPUT_TEXTURE].getWidth()) / 2,
+			(WINDOW_HEIGHT - textures[INPUT_TEXTURE].getHeight()) / 2);
 
 		SDL_RenderPresent(renderer);
-		++frames;
 
 	}
+
+	SDL_StopTextInput();
 	
 	close();
 
@@ -277,9 +264,6 @@ bool loadAllMedia()
 		throw;
 	}
 
-	textures[PLAYER_TEXTURE].loadFromFile(renderer, "resources\\ufo_1.png");
-	textures[BACKGROUND_TEXTURE].loadFromFile(renderer, "resources\\space.png");
-
 	return true;
 
 }
@@ -298,20 +282,4 @@ SDL_Texture* loadTexture(const std::string& path)
 
 	return newTexture;
 
-}
-
-void renderBackground(SDL_Rect backgroundBounds)
-{
-
-	size_t textureWidth = textures[BACKGROUND_TEXTURE].getWidth();
-	size_t textureHeight = textures[BACKGROUND_TEXTURE].getHeight();
-
-	for (size_t i = 0; i < backgroundBounds.w / textureWidth; i++)
-	{
-		for (size_t j = 0; j < backgroundBounds.h / textureHeight; j++)
-		{
-			textures[BACKGROUND_TEXTURE].render(renderer,
-				backgroundBounds.x + i * textureWidth, backgroundBounds.y + j * textureHeight);
-		}
-	}
 }
