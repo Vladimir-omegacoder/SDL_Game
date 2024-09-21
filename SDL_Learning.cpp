@@ -20,7 +20,7 @@
 
 enum TexturesKey
 {
-	INPUT_TEXTURE,
+	TEXTURE_TEXT,
 	TEXTURE_TOTAL_COUNT
 };
 
@@ -36,6 +36,9 @@ SDL_Renderer* renderer = nullptr;
 
 
 Texture textures[TEXTURE_TOTAL_COUNT] {};
+
+const size_t DATA_SIZE = 10;
+Sint32 data[DATA_SIZE];
 
 SDL_Rect spriteClips[1];
 
@@ -74,8 +77,9 @@ int main(int argc, char* args[])
 	}
 
 	SDL_Color textColor = { 0, 0, 0, 0xFF };
-	std::string inputText = "Some text";
-	textures[INPUT_TEXTURE].loadFromRenderedText(renderer, inputText, font, textColor);
+	SDL_Color highlightColor = { 0xFF, 0, 0, 0xFF };
+	
+	int currentData = 0;
 
 	SDL_StartTextInput();
 
@@ -93,33 +97,17 @@ int main(int argc, char* args[])
 			}
 			if (e.type == SDL_KEYDOWN)
 			{
-				if (e.key.keysym.sym == SDLK_BACKSPACE && inputText.length() > 0)
+				switch (e.key.keysym.sym)
 				{
-					inputText.pop_back();
-					renderText = true;
-				}
-				if (e.key.keysym.sym == SDLK_c && SDL_GetModState() & KMOD_CTRL)
-				{
-					SDL_SetClipboardText(inputText.c_str());
-				}
-				if (e.key.keysym.sym == SDLK_v && SDL_GetModState() & KMOD_CTRL)
-				{
-					char* tempText = SDL_GetClipboardText();
-					inputText = tempText;
-					SDL_free(tempText);
+				case SDLK_UP:
+					textures
+					break;
 
-					renderText = true;
-				}
-				
-			}
-			if (e.type == SDL_TEXTINPUT)
-			{
-				if (!(SDL_GetModState() & KMOD_CTRL && (e.text.text[0] == 'c' || e.text.text[0] == 'C' || e.text.text[0] == 'v' || e.text.text[0] == 'V')))
-				{
-					inputText += e.text.text;
-					renderText = true;
+				default:
+					break;
 				}
 			}
+			
 			
 		}
 
@@ -251,6 +239,21 @@ void close()
 	IMG_Quit();
 	SDL_Quit();
 
+	SDL_RWops* file = SDL_RWFromFile("33_file_reading_and_writing/some_stuff.bin", "w+b");
+	if (file != nullptr)
+	{
+		for (size_t i = 0; i < DATA_SIZE; i++)
+		{
+			SDL_RWwrite(file, &data[i], sizeof(Sint32), 1);
+		}
+
+		SDL_RWclose(file);
+	}
+	else
+	{
+		std::cerr << "Failed to save the file. SDL Error: " << SDL_GetError() << '\n';
+	}
+
 }
 
 bool loadAllMedia()
@@ -263,6 +266,50 @@ bool loadAllMedia()
 		std::cerr << "Failed to load the font. SDL ttf Error: " << TTF_GetError() << '\n';
 		throw;
 	}
+
+	SDL_RWops* file = SDL_RWFromFile("resources\\some_stuff.bin", "r+b");
+	if (file == nullptr)
+	{
+
+		std::cerr << "Failed to open the file. SDL Error: " << SDL_GetError() << '\n';
+		file = SDL_RWFromFile("33_file_reading_and_writing/some_stuff.bin", "w+b");
+
+		if (file != nullptr)
+		{
+			std::cout << "Created new file.\n";
+			for (size_t i = 0; i < DATA_SIZE; i++)
+			{
+				data[i] = 0;
+				SDL_RWwrite(file, &data[i], sizeof(Sint32), 1);
+			}
+
+			SDL_RWclose(file);
+		}
+		else
+		{
+			std::cerr << "Failed to create the file. SDL Error: " << SDL_GetError() << '\n';
+			throw;
+		}
+
+	}
+	else
+	{
+		std::cout << "Reading file.\n";
+		for (size_t i = 0; i < DATA_SIZE; i++)
+		{
+			SDL_RWread(file, &data[i], sizeof(Sint32), 1);
+		}
+
+		SDL_RWclose(file);
+	}
+	
+	std::string text;
+	for (size_t i = 0; i < DATA_SIZE; i++)
+	{
+		text.append(std::to_string(data[i]));
+	}
+
+	textures[TEXTURE_TEXT].loadFromRenderedText(renderer, text, font, SDL_Color{ 0, 0, 0, 255 });
 
 	return true;
 
